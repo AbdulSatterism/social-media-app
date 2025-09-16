@@ -3,23 +3,14 @@
 import { Model } from 'mongoose';
 
 export type IUser = {
-  name: string;
+  name?: string;
   email: string;
-  phone: string;
+  phone?: string;
   password: string;
-  googleId?: string;
-  facebookId?: string;
   role?: 'ADMIN' | 'USER';
   gender?: 'MALE' | 'FEMALE' | 'OTHERS';
   image?: string;
-  age?: number;
-  height?: number;
-  weight?: number;
-  country?: string;
-  fitnessLevel?: 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
-  injury?: string;
-  payment?: boolean;
-  subscription?: boolean;
+  dob?: Date;
   isDeleted?: boolean;
   authentication?: {
     isResetPassword: boolean;
@@ -35,11 +26,3 @@ export type UserModal = {
   isAccountCreated(id: string): any;
   isMatchPassword(password: string, hashPassword: string): boolean;
 } & Model<IUser>;
-
-/*
-  authentication?: {
-    isResetPassword: boolean;
-    oneTimeCode: number;
-    expireAt: Date;
-  };
-  */

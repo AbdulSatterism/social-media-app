@@ -23,7 +23,7 @@ const createUserFromDb = async (payload: IUser) => {
 
   const otp = generateOTP();
   const emailValues = {
-    name: result.name,
+    name: result.name || 'User',
     otp,
     email: result.email,
   };
