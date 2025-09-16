@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
@@ -6,7 +5,7 @@ import { AuthService } from './auth.service';
 import config from '../../../config';
 import AppError from '../../errors/AppError';
 
-const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+const verifyEmail = catchAsync(async (req, res) => {
   const { ...verifyData } = req.body;
   const result = await AuthService.verifyEmailToDB(verifyData);
 
@@ -18,7 +17,7 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const loginUser = catchAsync(async (req: Request, res: Response) => {
+const loginUser = catchAsync(async (req, res) => {
   const { ...loginData } = req.body;
   const result = await AuthService.loginUserFromDB(loginData);
 
@@ -35,7 +34,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+const forgetPassword = catchAsync(async (req, res) => {
   const email = req.body.email;
   const result = await AuthService.forgetPasswordToDB(email);
 
@@ -47,7 +46,7 @@ const forgetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const resetPassword = catchAsync(async (req: Request, res: Response) => {
+const resetPassword = catchAsync(async (req, res) => {
   const authorizationHeader = req.headers.authorization;
 
   if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
@@ -71,7 +70,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const changePassword = catchAsync(async (req: Request, res: Response) => {
+const changePassword = catchAsync(async (req, res) => {
   const user = req.user;
 
   const { ...passwordData } = req.body;
@@ -84,7 +83,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const deleteAccount = catchAsync(async (req: Request, res: Response) => {
+const deleteAccount = catchAsync(async (req, res) => {
   const user = req.user;
   const result = await AuthService.deleteAccountToDB(user);
 
@@ -96,7 +95,7 @@ const deleteAccount = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const newAccessToken = catchAsync(async (req: Request, res: Response) => {
+const newAccessToken = catchAsync(async (req, res) => {
   const { token } = req.body;
   const result = await AuthService.newAccessTokenToUser(token);
 
@@ -108,21 +107,19 @@ const newAccessToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const resendVerificationEmail = catchAsync(
-  async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const result = await AuthService.resendVerificationEmailToDB(email);
+const resendVerificationEmail = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  const result = await AuthService.resendVerificationEmailToDB(email);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: 'Generate OTP and send successfully',
-      data: result,
-    });
-  },
-);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Generate OTP and send successfully',
+    data: result,
+  });
+});
 
-const googleLogin = catchAsync(async (req: Request, res: Response) => {
+const googleLogin = catchAsync(async (req, res) => {
   const result = await AuthService.googleLogin(req.body);
 
   sendResponse(res, {
@@ -133,7 +130,7 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const facebookLogin = catchAsync(async (req: Request, res: Response) => {
+const facebookLogin = catchAsync(async (req, res) => {
   const result = await AuthService.facebookLogin(req.body);
 
   sendResponse(res, {

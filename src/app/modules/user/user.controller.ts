@@ -1,14 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
-import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
-import getFilePath from '../../../shared/getFilePath';
-import fs from 'fs';
 
-const createUser = catchAsync(async (req: Request, res: Response) => {
+const createUser = catchAsync(async (req, res) => {
   const value = {
     ...req.body,
   };
@@ -22,7 +17,7 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllUser = catchAsync(async (req: Request, res: Response) => {
+const getAllUser = catchAsync(async (req, res) => {
   const result = await UserService.getAllUsers(req.query);
 
   sendResponse(res, {
@@ -33,7 +28,7 @@ const getAllUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getUserProfile = catchAsync(async (req: Request, res: Response) => {
+const getUserProfile = catchAsync(async (req, res) => {
   const user = req.user;
   const result = await UserService.getUserProfileFromDB(user);
 
@@ -46,7 +41,7 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 });
 
 //update profile
-const updateProfile = catchAsync(async (req: Request, res: Response) => {
+const updateProfile = catchAsync(async (req, res) => {
   const user = req.user;
 
   let image;
@@ -69,7 +64,7 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getSingleUser = catchAsync(async (req: Request, res: Response) => {
+const getSingleUser = catchAsync(async (req, res) => {
   const result = await UserService.getSingleUser(req.params.id);
   sendResponse(res, {
     success: true,
@@ -80,7 +75,7 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 // search by phone number
-const searchByPhone = catchAsync(async (req: Request, res: Response) => {
+const searchByPhone = catchAsync(async (req, res) => {
   const searchTerm = req.query.searchTerm;
   const userId = req?.user?.id;
 
