@@ -12,6 +12,7 @@ export type IUser = {
   image?: string;
   dob?: Date;
   isDeleted?: boolean;
+  isFirstLogin?: boolean;
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

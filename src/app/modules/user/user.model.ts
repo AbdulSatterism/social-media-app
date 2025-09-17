@@ -53,6 +53,10 @@ const userSchema = new Schema<IUser, UserModal>(
       type: Boolean,
       default: false,
     },
+    isFirstLogin: {
+      type: Boolean,
+      default: false,
+    },
 
     authentication: {
       type: {
