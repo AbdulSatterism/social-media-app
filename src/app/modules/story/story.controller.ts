@@ -5,18 +5,11 @@ import { StoryService } from './story.services';
 
 const createStory = catchAsync(async (req, res) => {
   const userId = req.user.id;
-
-  let content = '';
-  if (req.files && 'content' in req.files && req.files.content[0]) {
-    content = `/images/${req.files.content[0].filename}`;
-  }
-
-  const value = {
-    content: content,
+  const result = await StoryService.createStory({
     author: userId,
-  };
-
-  const result = await StoryService.createStory(value);
+    ...req.body,
+    contentType: req.body.video ? 'video' : 'image',
+  });
 
   sendResponse(res, {
     success: true,

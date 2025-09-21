@@ -3,7 +3,9 @@ import { IStory } from './story.interface';
 
 const storySchema = new Schema<IStory>(
   {
-    content: { type: String, required: true },
+    image: { type: String, default: '' },
+    video: { type: String, default: '' },
+    contentType: { type: String, enum: ['image', 'video'], required: true },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   {
