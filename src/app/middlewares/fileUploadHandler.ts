@@ -29,6 +29,9 @@ const fileUploadHandler = () => {
         case 'image':
           uploadDir = path.join(baseUploadDir, 'images');
           break;
+        case 'content':
+          uploadDir = path.join(baseUploadDir, 'content');
+          break;
         case 'gifImage':
           uploadDir = path.join(baseUploadDir, 'gifImage');
           break;
@@ -60,7 +63,11 @@ const fileUploadHandler = () => {
   });
 
   const filterFilter = (req: Request, file: any, cb: FileFilterCallback) => {
-    if (file.fieldname === 'image' || file.fieldname === 'coverPhoto') {
+    if (
+      file.fieldname === 'image' ||
+      file.fieldname === 'coverPhoto' ||
+      file.fieldname === 'content'
+    ) {
       // Allow all images without checking the type
 
       // //TODO: update file system
@@ -102,6 +109,7 @@ const fileUploadHandler = () => {
     fileFilter: filterFilter,
   }).fields([
     { name: 'gifImage', maxCount: 10 },
+    { name: 'content', maxCount: 10 },
     { name: 'image', maxCount: 10 },
     { name: 'coverPhoto', maxCount: 10 },
     { name: 'media', maxCount: 10 },
