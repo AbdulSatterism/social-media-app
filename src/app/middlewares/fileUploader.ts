@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-undef */
 import type { Express } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -10,7 +11,7 @@ import catchAsync from '../../shared/catchAsync';
 import { errorLogger, logger } from '../../shared/logger';
 import AppError from '../errors/AppError';
 
-// ✅ File validators with folders
+//  File validators with folders
 export const fileValidators = {
   images: { validator: /^image\//, folder: 'images' },
   videos: { validator: /^video\//, folder: 'videos' },
@@ -57,7 +58,7 @@ const fileUploader = (fields: UploadFields) =>
         if (files?.[field]?.length) {
           const uploadedFiles = files[field].map(
             file =>
-              `/uploads/${getFolderByMime(file.mimetype)}/${file.filename}`, // ✅ Local path with folder
+              `/uploads/${getFolderByMime(file.mimetype)}/${file.filename}`, //  Local path with folder
           );
 
           req.body[field] =
@@ -120,9 +121,8 @@ export const deleteFile = async (filename: string) => {
   }
 };
 
-/**
- * Helper: get folder by MIME type
- */
+//  Helper: get folder by MIME type
+
 const getFolderByMime = (mime: string): string => {
   mime = mime.toLowerCase();
   const matched = Object.values(fileValidators).find(v =>
@@ -131,7 +131,7 @@ const getFolderByMime = (mime: string): string => {
   return matched?.folder || 'others';
 };
 
-// ✅ Local storage config
+// Local storage config
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const folder = getFolderByMime(file.mimetype);

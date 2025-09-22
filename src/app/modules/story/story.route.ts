@@ -28,4 +28,22 @@ router.post(
   StoryController.createStory,
 );
 
+router.get(
+  '/all-stories',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  StoryController.allStories,
+);
+
+router.get(
+  '/my-stories',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  StoryController.myAllStories,
+);
+
+router.get(
+  '/:id',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  StoryController.getStoryById,
+);
+
 export const StoryRoutes = router;

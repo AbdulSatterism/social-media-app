@@ -5,12 +5,14 @@ type IData<T> = {
   statusCode: number;
   message?: string;
   paymentIntent?: string | undefined;
-  meta?: {
-    page: number;
-    limit: number;
-    totalPage: number;
-    total: number;
-  };
+  meta?:
+    | {
+        page: number;
+        limit: number;
+        totalPage: number;
+        total: number;
+      }
+    | undefined;
   data?: T;
 };
 
