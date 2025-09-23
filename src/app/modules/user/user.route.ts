@@ -15,7 +15,11 @@ router.post(
   UserController.createUser,
 );
 
-router.get('/all-user', auth(USER_ROLES.ADMIN), UserController.getAllUser);
+router.get(
+  '/all-user',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  UserController.getAllUser,
+);
 
 router.patch(
   '/update-profile',
