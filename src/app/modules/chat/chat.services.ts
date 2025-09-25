@@ -97,14 +97,29 @@ const addMembersToGroupChat = async (
     );
   }
 
-  // Add new members to the group chat
-  const objectIdMembers = newMembers.map(id => new mongoose.Types.ObjectId(id));
+  // Filter out members who are already in the group
+  const existingMemberIds = chat.members.map(m => m.toString());
+  const uniqueNewMembers = newMembers.filter(
+    id => !existingMemberIds.includes(id),
+  );
+
+  if (uniqueNewMembers.length === 0) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'All provided members are already in the group',
+    );
+  }
+
+  // Add only unique new members
+  const objectIdMembers = uniqueNewMembers.map(
+    id => new mongoose.Types.ObjectId(id),
+  );
   chat.members.push(...objectIdMembers);
   await chat.save();
 
   // Create notifications for the new members
   await Promise.all(
-    newMembers.map(participantId =>
+    uniqueNewMembers.map(participantId =>
       Notification.create({
         content: 'You have been added to a group chat.',
         senderId: adderId,
@@ -155,6 +170,13 @@ const leaveGroupChat = async (chatId: string, memberId: string) => {
   }
   if (chat.type !== 'group') {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Can only leave group chats');
+  }
+  const isMember = chat.members.some(member => member.toString() === memberId);
+  if (!isMember) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'you are not available in this group',
+    );
   }
   // Remove the member from the group chat
   chat.members = chat.members.filter(member => member.toString() !== memberId);
