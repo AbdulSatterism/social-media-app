@@ -42,6 +42,130 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
   return chat;
 };
 
+const createGroupChat = async (creatorId: string, members: string[]) => {
+  if (!members || members.length === 0) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Group members are required');
+  }
+
+  const uniqueMembers = Array.from(new Set([...members, creatorId])); // Ensure creator is in the group
+  const objectIdMembers = uniqueMembers.map(
+    id => new mongoose.Types.ObjectId(id),
+  );
+
+  const chat = await Chat.create({
+    type: 'group',
+    members: objectIdMembers,
+    createdBy: new mongoose.Types.ObjectId(creatorId),
+  } as IChat);
+
+  // when create group chat, need to create notification for all members except creator
+  await Promise.all(
+    uniqueMembers
+      .filter(id => id !== creatorId)
+      .map(participantId =>
+        Notification.create({
+          content: 'You have been added to a new group chat.',
+          senderId: creatorId,
+          receiverId: participantId,
+        }),
+      ),
+  );
+
+  return chat;
+};
+
+// add new member to group chat at a time one or more members can added by creator
+const addMembersToGroupChat = async (
+  chatId: string,
+  adderId: string,
+  newMembers: string[],
+) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Can only add members to group chats',
+    );
+  }
+  if (chat.createdBy.toString() !== adderId) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Only the group creator can add members',
+    );
+  }
+
+  // Add new members to the group chat
+  const objectIdMembers = newMembers.map(id => new mongoose.Types.ObjectId(id));
+  chat.members.push(...objectIdMembers);
+  await chat.save();
+
+  // Create notifications for the new members
+  await Promise.all(
+    newMembers.map(participantId =>
+      Notification.create({
+        content: 'You have been added to a group chat.',
+        senderId: adderId,
+        receiverId: participantId,
+      }),
+    ),
+  );
+
+  return chat;
+};
+
+// remove member from group chat at a time one
+
+const removeMemberFromGroupChatByCreator = async (
+  chatId: string,
+  removerId: string,
+  memberId: string,
+) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Can only remove members from group chats',
+    );
+  }
+  if (chat.createdBy.toString() !== removerId) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Only the group creator can remove members',
+    );
+  }
+
+  // Remove the member from the group chat
+  chat.members = chat.members.filter(member => member.toString() !== memberId);
+  await chat.save();
+
+  return chat;
+};
+
+// leave group chat by himself
+const leaveGroupChat = async (chatId: string, memberId: string) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Can only leave group chats');
+  }
+  // Remove the member from the group chat
+  chat.members = chat.members.filter(member => member.toString() !== memberId);
+  await chat.save();
+  return chat;
+};
+
 export const ChatService = {
   createPrivateChat,
+  createGroupChat,
+  addMembersToGroupChat,
+  removeMemberFromGroupChatByCreator,
+  leaveGroupChat,
 };

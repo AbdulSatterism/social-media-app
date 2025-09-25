@@ -14,6 +14,20 @@ const createPrivateChat = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const createGroupChat = catchAsync(async (req, res) => {
+  const { members } = req.body;
+  const creatorId = req?.user?.id;
+  const result = await ChatService.createGroupChat(creatorId, members);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'group chat created successfully',
+    data: result,
+  });
+});
+
 export const ChatController = {
   createPrivateChat,
+  createGroupChat,
 };

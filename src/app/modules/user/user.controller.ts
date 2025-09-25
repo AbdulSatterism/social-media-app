@@ -24,7 +24,13 @@ const getAllUser = catchAsync(async (req, res) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'all user retrieved successfully',
-    data: result,
+    meta: {
+      page: Number(result.meta.page),
+      limit: Number(result.meta.limit),
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
   });
 });
 
@@ -75,14 +81,11 @@ const getSingleUser = catchAsync(async (req, res) => {
 });
 
 // search by phone number
-const searchByPhone = catchAsync(async (req, res) => {
+const searchUser = catchAsync(async (req, res) => {
   const searchTerm = req.query.searchTerm;
   const userId = req?.user?.id;
 
-  const result = await UserService.searchUserByPhone(
-    searchTerm as string,
-    userId,
-  );
+  const result = await UserService.searchUser(searchTerm as string, userId);
 
   sendResponse(res, {
     success: true,
@@ -96,7 +99,7 @@ export const UserController = {
   createUser,
   getUserProfile,
   updateProfile,
-  searchByPhone,
+  searchUser,
   getSingleUser,
   getAllUser,
 };

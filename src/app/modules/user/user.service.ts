@@ -12,6 +12,7 @@ import { IUser } from './user.interface';
 import { User } from './user.model';
 import unlinkFile from '../../../shared/unlinkFile';
 import AppError from '../../errors/AppError';
+import { Types } from 'mongoose';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
@@ -53,19 +54,21 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   const size = parseInt(limit as string) || 10;
   const skip = (pages - 1) * size;
 
-  const result = await User.find()
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(size)
-    .lean();
+  const [result, total] = await Promise.all([
+    User.find().sort({ createdAt: -1 }).skip(skip).limit(size).lean(),
+    User.countDocuments(),
+  ]);
 
-  const count = await User.countDocuments();
+  const totalPage = Math.ceil(total / size);
 
   return {
-    result,
-    totalData: count,
-    page: pages,
-    limit: size,
+    data: result,
+    meta: {
+      page: pages,
+      limit: size,
+      totalPage,
+      total,
+    },
   };
 };
 
@@ -119,16 +122,28 @@ const getSingleUser = async (id: string): Promise<IUser | null> => {
   return result;
 };
 
-// search user by phone
-const searchUserByPhone = async (searchTerm: string, userId: string) => {
+// Search user by phone number, name, or email
+const searchUser = async (searchTerm: string, userId: string) => {
   let result;
 
+  const id = new Types.ObjectId(userId);
+
+  // Only search if the search term is provided
   if (searchTerm) {
     result = await User.find({
-      phone: { $regex: searchTerm, $options: 'i' },
-      _id: { $ne: userId },
+      $and: [
+        { _id: { $ne: id } }, // Ensure the userId is not part of the result
+        {
+          $or: [
+            { phone: { $regex: searchTerm, $options: 'i' } },
+            { name: { $regex: searchTerm, $options: 'i' } },
+            { email: { $regex: searchTerm, $options: 'i' } },
+          ],
+        },
+      ],
     });
   } else {
+    // If no search term is provided, return a limited set of results
     result = await User.find({ _id: { $ne: userId } }).limit(10);
   }
 
@@ -140,6 +155,6 @@ export const UserService = {
   getUserProfileFromDB,
   updateProfileToDB,
   getSingleUser,
-  searchUserByPhone,
+  searchUser,
   getAllUsers,
 };

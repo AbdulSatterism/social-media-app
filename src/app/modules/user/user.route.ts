@@ -47,7 +47,7 @@ router.get(
 router.get(
   '/user-search',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  UserController.searchByPhone,
+  UserController.searchUser,
 );
 
 router.get(
