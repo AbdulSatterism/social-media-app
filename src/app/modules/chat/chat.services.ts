@@ -27,6 +27,7 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
 
   const chat = await Chat.create({
     type: 'private',
+    name: 'private chat',
     members: [new mongoose.Types.ObjectId(a), new mongoose.Types.ObjectId(b)],
     createdBy: new mongoose.Types.ObjectId(creatorId),
   } as IChat);
@@ -54,6 +55,7 @@ const createGroupChat = async (creatorId: string, members: string[]) => {
 
   const chat = await Chat.create({
     type: 'group',
+    name: 'group chat',
     members: objectIdMembers,
     createdBy: new mongoose.Types.ObjectId(creatorId),
   } as IChat);

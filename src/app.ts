@@ -31,11 +31,11 @@ app.use('/api/v1', router);
 //live response
 app.get('/', (req: Request, res: Response) => {
   res.send(
-    '<h1 style="text-align:center; color:#A55FEF; font-family:Verdana;">Hay Ozzy how can i assist you</h1>',
+    '<h1 style="text-align:center; color:#A55FEF; font-family:Verdana;">Social media server is running</h1>',
   );
 });
 
-//global error handle
+//global error handler
 app.use(globalErrorHandler);
 
 //*handle not found route;

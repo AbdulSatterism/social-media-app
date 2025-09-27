@@ -4,6 +4,7 @@ import { IChat } from './chat.interface';
 const chatSchema = new Schema<IChat>(
   {
     type: { type: String, enum: ['private', 'group'], default: 'private' },
+    name: { type: String, default: '' },
     members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     createdBy: { type: Schema.Types.ObjectId, required: true },
   },
