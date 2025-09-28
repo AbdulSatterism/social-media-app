@@ -13,7 +13,7 @@ const messageSchema = new Schema<IMessage>(
       required: true,
     },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false },
 );
 
 export const Message = model<IMessage>('Message', messageSchema);

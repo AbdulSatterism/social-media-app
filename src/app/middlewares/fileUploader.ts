@@ -57,8 +57,7 @@ const fileUploader = (fields: UploadFields) =>
       Object.keys(fields).forEach(field => {
         if (files?.[field]?.length) {
           const uploadedFiles = files[field].map(
-            file =>
-              `/uploads/${getFolderByMime(file.mimetype)}/${file.filename}`, //  Local path with folder
+            file => `/${getFolderByMime(file.mimetype)}/${file.filename}`, //  Local path with folder
           );
 
           req.body[field] =

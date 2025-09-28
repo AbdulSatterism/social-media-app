@@ -95,6 +95,16 @@ const searchUser = catchAsync(async (req, res) => {
   });
 });
 
+const deleteUser = catchAsync(async (req, res) => {
+  const result = await UserService.deleteUser(req.user.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -102,4 +112,5 @@ export const UserController = {
   searchUser,
   getSingleUser,
   getAllUser,
+  deleteUser,
 };

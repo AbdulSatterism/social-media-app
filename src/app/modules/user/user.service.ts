@@ -150,6 +150,15 @@ const searchUser = async (searchTerm: string, userId: string) => {
   return result;
 };
 
+const deleteUser = async (id: string) => {
+  const isExistUser = await User.findById(id);
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+  const result = await User.findByIdAndDelete(id);
+  return result;
+};
+
 export const UserService = {
   createUserFromDb,
   getUserProfileFromDB,
@@ -157,4 +166,5 @@ export const UserService = {
   getSingleUser,
   searchUser,
   getAllUsers,
+  deleteUser,
 };
