@@ -75,10 +75,81 @@ const leaveGroupChat = catchAsync(async (req, res) => {
   });
 });
 
+const chatListWithLastMessage = catchAsync(async (req, res) => {
+  const userId = req?.user?.id;
+  const result = await ChatService.chatListWithLastMessage(userId, req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Fetched chat list with last message successfully',
+    meta: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
+  });
+});
+
+const chatListWithGroupLastMessage = catchAsync(async (req, res) => {
+  const userId = req?.user?.id;
+  const result = await ChatService.groupChatListWithLastMessage(
+    userId,
+    req.query,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Fetched group chat list with last message successfully',
+    meta: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
+  });
+});
+
+const updateGroupName = catchAsync(async (req, res) => {
+  const { chatId, newName } = req.body;
+  const result = await ChatService.updateGroupName(
+    req.user.id,
+    chatId,
+    newName,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Group name updated successfully',
+    data: result,
+  });
+});
+
+const getGroupChatDetails = catchAsync(async (req, res) => {
+  const { chatId } = req.params;
+  const result = await ChatService.getGroupChatDetails(req.user.id, chatId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Fetched group chat details successfully',
+    data: result,
+  });
+});
+
 export const ChatController = {
   createPrivateChat,
   createGroupChat,
   addMembersToGroupChat,
   removeMemberFromGroupChatByCreator,
   leaveGroupChat,
+  chatListWithLastMessage,
+  chatListWithGroupLastMessage,
+  updateGroupName,
+  getGroupChatDetails,
 };

@@ -5,6 +5,8 @@ import sortMembers from '../../../util/sortMembers';
 import { Chat } from './chat.model';
 import mongoose from 'mongoose';
 import { Notification } from '../notifications/notifications.model';
+import { User } from '../user/user.model';
+import { Message } from '../message/message.model';
 
 const createPrivateChat = async (creatorId: string, participantId: string) => {
   if (creatorId === participantId) {
@@ -186,10 +188,249 @@ const leaveGroupChat = async (chatId: string, memberId: string) => {
   return chat;
 };
 
+// for private chat list with last message
+const chatListWithLastMessage = async (
+  userId: string,
+  query: Record<string, unknown>,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const isUserExist = await User.isExistUserById(userId);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'user not found');
+  }
+
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  // Fetch private chats where the user is a member, include last message if exists
+  const chats = await Chat.aggregate([
+    {
+      $match: {
+        type: 'private',
+        members: userObjectId,
+      },
+    },
+    {
+      $sort: { updatedAt: -1 },
+    },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'messages',
+        let: { chat: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$chat', '$$chat'] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: 'lastMessage',
+      },
+    },
+    {
+      $addFields: {
+        lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+      },
+    },
+    // No $match for lastMessage, so chats without messages are also included
+    {
+      $project: {
+        members: 0,
+      },
+    },
+  ]);
+
+  // Get total count for pagination
+  const total = await Chat.countDocuments({
+    type: 'private',
+    members: userObjectId,
+  });
+  const totalPage = Math.ceil(total / limit);
+
+  return {
+    data: chats,
+    meta: {
+      page,
+      limit,
+      totalPage,
+      total,
+    },
+  };
+};
+
+// for group chat list with last message
+
+const groupChatListWithLastMessage = async (
+  userId: string,
+  query: Record<string, unknown>,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const isUserExist = await User.isExistUserById(userId);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'user not found');
+  }
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  // Fetch group chats where the user is a member, include last message if exists
+  const chats = await Chat.aggregate([
+    {
+      $match: {
+        type: 'group',
+        members: userObjectId,
+      },
+    },
+    {
+      $sort: { updatedAt: -1 },
+    },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'messages',
+        let: { chat: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$chat', '$$chat'] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: 'lastMessage',
+      },
+    },
+    {
+      $addFields: {
+        lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
+      },
+    },
+    // No $match for lastMessage, so chats without messages are also included
+    {
+      $project: {
+        members: 0,
+      },
+    },
+  ]);
+
+  // Get total count for pagination
+  const total = await Chat.countDocuments({
+    type: 'group',
+    members: userObjectId,
+  });
+  const totalPage = Math.ceil(total / limit);
+
+  return {
+    data: chats,
+    meta: {
+      page,
+      limit,
+      totalPage,
+      total,
+    },
+  };
+};
+
+// update name if group chat
+
+const updateGroupName = async (
+  userId: string,
+  chatId: string,
+  newName: string,
+) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Can only update name for group chats',
+    );
+  }
+  const isMember = chat?.members?.some(member => member.toString() === userId);
+  if (!isMember) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You are not a member of this group',
+    );
+  }
+  chat.name = newName;
+  await chat.save();
+  return chat;
+};
+
+// single group with member details
+
+const getGroupChatDetails = async (userId: string, chatId: string) => {
+  const chat = await Chat.findById(chatId).populate(
+    'members',
+    'name email image',
+  );
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Can only get details for group chats',
+    );
+  }
+  const isMember = chat?.members?.some(
+    member => member._id.toString() === userId,
+  );
+  if (!isMember) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You are not a member of this group',
+    );
+  }
+  return chat;
+};
+
+// chat inbox all message with pagination
+
+const getChatInboxMessages = async (
+  chatId: string,
+  query: Record<string, unknown>,
+) => {
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  // Fetch messages for the chat with pagination
+  const messages = await Message.find({ chat: chatId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate('sender', 'name image -_id');
+
+  // Get total count for pagination
+  const total = await Message.countDocuments({ chat: chatId });
+  const totalPage = Math.ceil(total / limit);
+
+  return {
+    data: messages,
+    meta: {
+      page,
+      limit,
+      totalPage,
+      total,
+    },
+  };
+};
+
 export const ChatService = {
   createPrivateChat,
   createGroupChat,
   addMembersToGroupChat,
   removeMemberFromGroupChatByCreator,
   leaveGroupChat,
+  groupChatListWithLastMessage,
+  chatListWithLastMessage,
+  updateGroupName,
+  getGroupChatDetails,
 };

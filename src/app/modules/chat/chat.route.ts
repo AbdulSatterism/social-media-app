@@ -35,4 +35,27 @@ router.post(
   ChatController.leaveGroupChat,
 );
 
+router.get(
+  '/private-chat-list',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.chatListWithLastMessage,
+);
+router.get(
+  '/group-chat-list',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.chatListWithGroupLastMessage,
+);
+
+router.patch(
+  '/update-group-name',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.updateGroupName,
+);
+
+router.get(
+  '/group-chat/:chatId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.getGroupChatDetails,
+);
+
 export const ChatRoutes = router;
