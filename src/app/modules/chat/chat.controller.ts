@@ -142,6 +142,29 @@ const getGroupChatDetails = catchAsync(async (req, res) => {
   });
 });
 
+const getChatInboxMessages = catchAsync(async (req, res) => {
+  const { chatId } = req.params;
+  const userId = req.user.id;
+  const result = await ChatService.getChatInboxMessages(
+    userId,
+    chatId,
+    req.query,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Fetched chat inbox messages successfully',
+    meta: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
+  });
+});
+
 export const ChatController = {
   createPrivateChat,
   createGroupChat,
@@ -152,4 +175,5 @@ export const ChatController = {
   chatListWithGroupLastMessage,
   updateGroupName,
   getGroupChatDetails,
+  getChatInboxMessages,
 };

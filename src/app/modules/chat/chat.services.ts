@@ -390,6 +390,7 @@ const getGroupChatDetails = async (userId: string, chatId: string) => {
 // chat inbox all message with pagination
 
 const getChatInboxMessages = async (
+  userId: string,
   chatId: string,
   query: Record<string, unknown>,
 ) => {
@@ -397,13 +398,28 @@ const getChatInboxMessages = async (
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
+  const isUserExist = await User.isExistUserById(userId);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'user not found');
+  }
+
   const chat = await Chat.findById(chatId);
   if (!chat) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
   }
+
+  const isMember = chat.members.some(
+    (member: mongoose.Types.ObjectId) => member.toString() === userId,
+  );
+  if (!isMember) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You are not a member of this chat',
+    );
+  }
+
   // Fetch messages for the chat with pagination
   const messages = await Message.find({ chat: chatId })
-    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .populate('sender', 'name image -_id');
@@ -433,4 +449,5 @@ export const ChatService = {
   chatListWithLastMessage,
   updateGroupName,
   getGroupChatDetails,
+  getChatInboxMessages,
 };

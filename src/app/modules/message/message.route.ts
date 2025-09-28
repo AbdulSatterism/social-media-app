@@ -2,6 +2,8 @@ import express from 'express';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
 import fileUploader from '../../middlewares/fileUploader';
+import { MessageController } from './message.controller';
+
 const router = express.Router();
 
 // Upload image/video
@@ -16,6 +18,12 @@ router.post(
     const mediaUrl = req.body.image || req.body.video;
     res.status(200).json({ mediaUrl });
   },
+);
+
+router.delete(
+  '/delete/:messageId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  MessageController.deleteMessageBySender,
 );
 
 export const MessageRoutes = router;

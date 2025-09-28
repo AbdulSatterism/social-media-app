@@ -58,4 +58,10 @@ router.get(
   ChatController.getGroupChatDetails,
 );
 
+router.get(
+  '/chat-inbox/:chatId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.getChatInboxMessages,
+);
+
 export const ChatRoutes = router;
