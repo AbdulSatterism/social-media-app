@@ -62,4 +62,10 @@ router.delete(
   UserController.deleteUser,
 );
 
+router.delete(
+  '/delete-by-admin/:userId',
+  auth(USER_ROLES.ADMIN),
+  UserController.deleteUserByAdmin,
+);
+
 export const UserRoutes = router;

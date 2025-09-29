@@ -37,7 +37,26 @@ const deleteNotification = catchAsync(async (req, res) => {
   });
 });
 
+///
+
+const getAdminNotificaiton = catchAsync(async (req, res) => {
+  const result = await NotificationService.getAllAdminNotification(req.query);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Notifications retrieved successfully',
+    meta: {
+      page: result.meta.page,
+      limit: result.meta.limit,
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
+  });
+});
+
 export const NotificationController = {
   getMyAllNotifications,
   deleteNotification,
+  getAdminNotificaiton,
 };

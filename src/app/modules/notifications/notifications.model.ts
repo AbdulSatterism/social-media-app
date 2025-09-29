@@ -1,5 +1,5 @@
 import { model, Schema } from 'mongoose';
-import { INotification } from './notifications.interface';
+import { IAdminNotification, INotification } from './notifications.interface';
 
 const notificationSchema = new Schema<INotification>(
   {
@@ -15,7 +15,28 @@ const notificationSchema = new Schema<INotification>(
   },
 );
 
+const adminNotificationSchema = new Schema<IAdminNotification>(
+  {
+    content: {
+      type: String,
+      default: '',
+    },
+    read: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
+
 export const Notification = model<INotification>(
   'Notification',
   notificationSchema,
+);
+
+export const AdminNotification = model<IAdminNotification>(
+  'AdminNotification',
+  adminNotificationSchema,
 );

@@ -17,4 +17,12 @@ router.delete(
   NotificationController.deleteNotification,
 );
 
+// admin notification
+
+router.get(
+  '/admin-notifications',
+  auth(USER_ROLES.ADMIN),
+  NotificationController.getAdminNotificaiton,
+);
+
 export const NotificationRoutes = router;

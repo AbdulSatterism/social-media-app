@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
-import { Notification } from './notifications.model';
+import { AdminNotification, Notification } from './notifications.model';
 import AppError from '../../errors/AppError';
 
 // my all notification
@@ -52,7 +52,40 @@ const deleteNotification = async (notificationId: string, userId: string) => {
   return notification;
 };
 
+// admin notificaitoin get all, get single, update read status, delete by admin
+
+const getAllAdminNotification = async (query: Record<string, unknown>) => {
+  const { page, limit } = query;
+  const pages = parseInt(page as string) || 1;
+  const size = parseInt(limit as string) || 10;
+  const skip = (pages - 1) * size;
+
+  const [result, total] = await Promise.all([
+    AdminNotification.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(size)
+      .lean(),
+    AdminNotification.countDocuments(),
+  ]);
+
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Notification not found!');
+  }
+  const totalPage = Math.ceil(total / size);
+  return {
+    data: result,
+    meta: {
+      page: pages,
+      limit: size,
+      totalPage,
+      total,
+    },
+  };
+};
+
 export const NotificationService = {
   getMyAllNotifications,
   deleteNotification,
+  getAllAdminNotification,
 };

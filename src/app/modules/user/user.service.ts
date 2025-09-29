@@ -13,6 +13,7 @@ import AppError from '../../errors/AppError';
 import { Types } from 'mongoose';
 import { emailTemplate } from '../../../shared/emailTemplate';
 import { emailHelper } from '../../../helpers/emailHelper';
+import { AdminNotification } from '../notifications/notifications.model';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
@@ -31,6 +32,12 @@ const createUserFromDb = async (payload: IUser) => {
 
   const accountEmailTemplate = emailTemplate.createAccount(emailValues);
   emailHelper.sendEmail(accountEmailTemplate);
+
+  // create notificaiton for admin
+
+  await AdminNotification.create({
+    content: `New user ${result.name} registered`,
+  });
 
   // send sms with phone number
 
@@ -164,6 +171,30 @@ const deleteUser = async (id: string) => {
   return result;
 };
 
+// delete user by admin
+
+const deleteUserByAdmin = async (adminId: string, userId: string) => {
+  const [isExistAdmin, isExistUser] = await Promise.all([
+    User.findById(adminId),
+    User.findById(userId),
+  ]);
+
+  if (!isExistAdmin) {
+    throw new AppError(StatusCodes.NOT_FOUND, "Admin user doesn't exist!");
+  }
+
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+
+  if (isExistAdmin.role !== 'ADMIN') {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'You are not admin');
+  }
+
+  const result = await User.findByIdAndDelete(userId);
+  return result;
+};
+
 export const UserService = {
   createUserFromDb,
   getUserProfileFromDB,
@@ -172,4 +203,5 @@ export const UserService = {
   searchUser,
   getAllUsers,
   deleteUser,
+  deleteUserByAdmin,
 };
