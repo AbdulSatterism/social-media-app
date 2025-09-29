@@ -25,4 +25,16 @@ router.get(
   NotificationController.getAdminNotificaiton,
 );
 
+router.get(
+  '/admin-notification/:id',
+  auth(USER_ROLES.ADMIN),
+  NotificationController.getSingleNotification,
+);
+
+router.delete(
+  '/admin-notification/:id',
+  auth(USER_ROLES.ADMIN),
+  NotificationController.deleteNotificationByAdmin,
+);
+
 export const NotificationRoutes = router;

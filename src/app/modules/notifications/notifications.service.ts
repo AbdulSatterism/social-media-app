@@ -85,9 +85,33 @@ const getAllAdminNotification = async (query: Record<string, unknown>) => {
 };
 
 // find single notification and update read status
+const getSingleNotification = async (id: string) => {
+  const notification = await AdminNotification.findByIdAndUpdate(
+    id,
+    { read: true },
+    { new: true },
+  ).lean();
+
+  if (!notification) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Notification not found');
+  }
+
+  return notification;
+};
+
+// delete notification by admin
+const deleteNotificationByAdmin = async (id: string) => {
+  const notification = await AdminNotification.findByIdAndDelete(id);
+  if (!notification) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Notification not found');
+  }
+  return notification;
+};
 
 export const NotificationService = {
   getMyAllNotifications,
   deleteNotification,
   getAllAdminNotification,
+  getSingleNotification,
+  deleteNotificationByAdmin,
 };
