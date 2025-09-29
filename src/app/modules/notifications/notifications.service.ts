@@ -84,6 +84,8 @@ const getAllAdminNotification = async (query: Record<string, unknown>) => {
   };
 };
 
+// find single notification and update read status
+
 export const NotificationService = {
   getMyAllNotifications,
   deleteNotification,

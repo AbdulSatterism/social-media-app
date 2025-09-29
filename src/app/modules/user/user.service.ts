@@ -14,6 +14,7 @@ import { Types } from 'mongoose';
 import { emailTemplate } from '../../../shared/emailTemplate';
 import { emailHelper } from '../../../helpers/emailHelper';
 import { AdminNotification } from '../notifications/notifications.model';
+import { sendSMS } from '../../../util/verifyByTwilio';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
@@ -30,6 +31,11 @@ const createUserFromDb = async (payload: IUser) => {
     email: result.email,
   };
 
+  // send sms with phone number
+  const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
+  await sendSMS(result.phone, message);
+
+  // send email
   const accountEmailTemplate = emailTemplate.createAccount(emailValues);
   emailHelper.sendEmail(accountEmailTemplate);
 
@@ -38,11 +44,6 @@ const createUserFromDb = async (payload: IUser) => {
   await AdminNotification.create({
     content: `New user ${result.name} registered`,
   });
-
-  // send sms with phone number
-
-  // const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
-  // await sendSMS(result.phone, message);
 
   // Update user with authentication details
   const authentication = {
