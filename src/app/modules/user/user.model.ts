@@ -12,6 +12,13 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       default: '',
     },
+    // email: {
+    //   type: String,
+    //   required: false,
+    //   unique: true,
+    //   sparse: true,
+    //   lowercase: true,
+    // },
     email: {
       type: String,
       required: true,
@@ -26,7 +33,8 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     phone: {
       type: String,
-      default: '',
+      required: false,
+      unique: true,
     },
     role: {
       type: String,

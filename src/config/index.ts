@@ -36,4 +36,9 @@ export default {
     key: process.env.GPT_API,
     gpt_model_url: process.env.GPT_MODEL_URL,
   },
+  twilio: {
+    twilio_account_sid: process.env.TWILIO_ACCOUNT_SID,
+    twilio_auth_token: process.env.TWILIO_AUTH_TOKEN,
+    twilio_phone_number: process.env.TWILIO_PHONE_NUMBER,
+  },
 };

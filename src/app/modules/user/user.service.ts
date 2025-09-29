@@ -4,8 +4,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
 import { USER_ROLES } from '../../../enums/user';
-import { emailHelper } from '../../../helpers/emailHelper';
-import { emailTemplate } from '../../../shared/emailTemplate';
 import generateOTP from '../../../util/generateOTP';
 
 import { IUser } from './user.interface';
@@ -13,6 +11,8 @@ import { User } from './user.model';
 import unlinkFile from '../../../shared/unlinkFile';
 import AppError from '../../errors/AppError';
 import { Types } from 'mongoose';
+import { emailTemplate } from '../../../shared/emailTemplate';
+import { emailHelper } from '../../../helpers/emailHelper';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
@@ -31,6 +31,11 @@ const createUserFromDb = async (payload: IUser) => {
 
   const accountEmailTemplate = emailTemplate.createAccount(emailValues);
   emailHelper.sendEmail(accountEmailTemplate);
+
+  // send sms with phone number
+
+  // const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
+  // await sendSMS(result.phone, message);
 
   // Update user with authentication details
   const authentication = {
