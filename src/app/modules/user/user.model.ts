@@ -12,29 +12,39 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       default: '',
     },
-    // email: {
-    //   type: String,
-    //   required: false,
-    //   unique: true,
-    //   sparse: true,
-    //   lowercase: true,
-    // },
     email: {
       type: String,
       required: true,
       unique: true,
+      sparse: true,
       lowercase: true,
+      trim: true,
+      // normalize: empty/invalid -> undefined so sparse unique is ignored
+      set: (v: unknown) => {
+        if (typeof v !== 'string') return undefined;
+        const s = v.trim().toLowerCase();
+        return s.length ? s : undefined;
+      },
     },
+
     password: {
       type: String,
       required: true,
-      select: 0,
-      minlength: 6,
+      select: false,
     },
+
     phone: {
       type: String,
       required: false,
       unique: true,
+      sparse: true,
+      trim: true,
+      // normalize: empty -> undefined so sparse unique is ignored
+      set: (v: unknown) => {
+        if (typeof v !== 'string') return undefined;
+        const s = v.trim();
+        return s.length ? s : undefined;
+      },
     },
     role: {
       type: String,
@@ -87,6 +97,8 @@ const userSchema = new Schema<IUser, UserModal>(
   { timestamps: true },
 );
 
+userSchema.index({ email: 1, phone: 1 }, { unique: true });
+
 //exist user check
 userSchema.statics.isExistUserById = async (id: string) => {
   const isExist = await User.findById(id);
@@ -96,6 +108,15 @@ userSchema.statics.isExistUserById = async (id: string) => {
 userSchema.statics.isExistUserByEmail = async (email: string) => {
   const isExist = await User.findOne({ email });
   return isExist;
+};
+
+// static helpers
+userSchema.statics.findByEmailOrPhone = function (identifier: string) {
+  // rudimentary check
+  const isEmail = identifier.includes('@');
+  return this.findOne(
+    isEmail ? { email: identifier.toLowerCase() } : { phone: identifier },
+  ).select('+password');
 };
 
 //account check
@@ -115,9 +136,13 @@ userSchema.statics.isMatchPassword = async (
 //check user
 userSchema.pre('save', async function (next) {
   //check user
-  const isExist = await User.findOne({ email: this.email });
+  const isExist = await User.findOne({
+    email: this.email,
+    $or: [{ phone: this.phone }],
+  });
+
   if (isExist) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Email already used');
+    throw new AppError(StatusCodes.BAD_REQUEST, 'phone or email already used!');
   }
 
   //password hash

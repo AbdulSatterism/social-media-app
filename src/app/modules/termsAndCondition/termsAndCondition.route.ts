@@ -20,7 +20,7 @@ router.post(
 
 router.get('/', termsConditionController.getTersmCondition);
 
-router.post(
+router.patch(
   '/update-terms-condition',
   auth(USER_ROLES.ADMIN),
   validateRequest(

@@ -3,7 +3,8 @@ import { z } from 'zod';
 const createUserSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email address').optional(),
-    password: z.string().min(6, 'Password must have at least 6 characters'),
+    phone: z.string().optional(),
+    password: z.string(),
   }),
 });
 

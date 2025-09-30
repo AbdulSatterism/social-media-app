@@ -14,10 +14,17 @@ import { Types } from 'mongoose';
 import { emailTemplate } from '../../../shared/emailTemplate';
 import { emailHelper } from '../../../helpers/emailHelper';
 import { AdminNotification } from '../notifications/notifications.model';
-import { sendSMS } from '../../../util/verifyByTwilio';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
+
+  if (!payload.phone && !payload.email) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Please provide email or phone number',
+    );
+  }
+
   const result = await User.create(payload);
 
   if (!result) {
@@ -31,13 +38,13 @@ const createUserFromDb = async (payload: IUser) => {
     email: result.email,
   };
 
-  // send sms with phone number
-  const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
-  await sendSMS(result.phone, message);
-
   // send email
   const accountEmailTemplate = emailTemplate.createAccount(emailValues);
   emailHelper.sendEmail(accountEmailTemplate);
+
+  // send sms with phone number
+  // const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
+  // await sendSMS(payload?.phone, message);
 
   // create notificaiton for admin
 

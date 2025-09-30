@@ -17,7 +17,7 @@ router.post(
 
 router.get('/', aboutControllers.getAllAbout);
 
-router.post(
+router.patch(
   '/update-about',
   auth(USER_ROLES.ADMIN),
   validateRequest(aboutValidations.updateAboutValidation),
