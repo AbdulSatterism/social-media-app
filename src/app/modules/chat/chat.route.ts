@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ChatController } from './chat.controller';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
+import fileUploader from '../../middlewares/fileUploader';
 
 const router = Router();
 
@@ -47,9 +48,10 @@ router.get(
 );
 
 router.patch(
-  '/update-group-name',
+  '/update-group/:chatId',
+  fileUploader({ image: { fileType: 'images', size: 10 * 1024 * 1024 } }),
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  ChatController.updateGroupName,
+  ChatController.updateGroup,
 );
 
 router.get(

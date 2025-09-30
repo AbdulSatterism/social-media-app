@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { Notification } from '../notifications/notifications.model';
 import { User } from '../user/user.model';
 import { Message } from '../message/message.model';
+import unlinkFile from '../../../shared/unlinkFile';
 
 const createPrivateChat = async (creatorId: string, participantId: string) => {
   if (creatorId === participantId) {
@@ -332,10 +333,10 @@ const groupChatListWithLastMessage = async (
 
 // update name if group chat
 
-const updateGroupName = async (
+const updateGroup = async (
   userId: string,
   chatId: string,
-  newName: string,
+  payload: Partial<IChat>,
 ) => {
   const chat = await Chat.findById(chatId);
   if (!chat) {
@@ -354,9 +355,15 @@ const updateGroupName = async (
       'You are not a member of this group',
     );
   }
-  chat.name = newName;
-  await chat.save();
-  return chat;
+
+  if (payload.image && chat.image) {
+    unlinkFile(chat.image);
+  }
+
+  const updatedChat = await Chat.findOneAndUpdate({ _id: chatId }, payload, {
+    new: true,
+  });
+  return updatedChat;
 };
 
 // single group with member details
@@ -447,7 +454,7 @@ export const ChatService = {
   leaveGroupChat,
   groupChatListWithLastMessage,
   chatListWithLastMessage,
-  updateGroupName,
+  updateGroup,
   getGroupChatDetails,
   getChatInboxMessages,
 };

@@ -114,12 +114,11 @@ const chatListWithGroupLastMessage = catchAsync(async (req, res) => {
   });
 });
 
-const updateGroupName = catchAsync(async (req, res) => {
-  const { chatId, newName } = req.body;
-  const result = await ChatService.updateGroupName(
+const updateGroup = catchAsync(async (req, res) => {
+  const result = await ChatService.updateGroup(
     req.user.id,
-    chatId,
-    newName,
+    req.params.chatId,
+    req.body,
   );
 
   sendResponse(res, {
@@ -173,7 +172,7 @@ export const ChatController = {
   leaveGroupChat,
   chatListWithLastMessage,
   chatListWithGroupLastMessage,
-  updateGroupName,
+  updateGroup,
   getGroupChatDetails,
   getChatInboxMessages,
 };
