@@ -9,6 +9,7 @@ import { tersmConditionRoutes } from '../app/modules/termsAndCondition/termsAndC
 import { StoryRoutes } from '../app/modules/story/story.route';
 import { ChatRoutes } from '../app/modules/chat/chat.route';
 import { MessageRoutes } from '../app/modules/message/message.route';
+import { ReportRoutes } from '../app/modules/report/report.route';
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const apiRoutes = [
   { path: '/terms', route: tersmConditionRoutes },
   { path: '/story', route: StoryRoutes },
   { path: '/chat', route: ChatRoutes },
-
+  { path: '/report', route: ReportRoutes },
   { path: '/message', route: MessageRoutes },
 ];
 
