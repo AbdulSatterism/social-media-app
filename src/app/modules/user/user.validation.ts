@@ -16,6 +16,7 @@ const updateUserProfileSchema = z.object({
     name: z.string().optional(),
     phone: z.string().optional(),
     dob: z.date().optional(),
+    image: z.string().optional(),
     gender: z.enum(['MALE', 'FEMALE', 'OTHERS']).optional(),
   }),
 });

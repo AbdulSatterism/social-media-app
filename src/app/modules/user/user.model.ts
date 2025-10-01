@@ -52,7 +52,7 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     image: {
       type: String,
-      default: '/public/usr.jpg',
+      default: '/public/user.jpg',
     },
     gender: {
       type: String,
