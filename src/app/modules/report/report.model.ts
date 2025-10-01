@@ -3,10 +3,10 @@ import { IReport } from './report.interface';
 
 const reportSchema = new Schema<IReport>(
   {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
-    email: { type: String, required: true },
-    content: { type: String, required: true },
+    name: { type: String, required: false, default: '' },
+    phone: { type: String, required: false, default: '' },
+    email: { type: String, required: false, default: '' },
+    content: { type: String, required: false, default: '' },
   },
   { timestamps: true },
 );

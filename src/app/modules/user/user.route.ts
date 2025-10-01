@@ -57,7 +57,7 @@ router.get(
 );
 
 router.delete(
-  '/delete-user',
+  '/delete-profile',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   UserController.deleteUser,
 );
