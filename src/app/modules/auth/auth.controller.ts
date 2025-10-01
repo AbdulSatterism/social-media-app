@@ -119,27 +119,27 @@ const resendVerificationEmail = catchAsync(async (req, res) => {
   });
 });
 
-const googleLogin = catchAsync(async (req, res) => {
-  const result = await AuthService.googleLogin(req.body);
+// const googleLogin = catchAsync(async (req, res) => {
+//   const result = await AuthService.googleLogin(req.body);
 
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User login successfully',
-    data: result,
-  });
-});
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: StatusCodes.OK,
+//     message: 'User login successfully',
+//     data: result,
+//   });
+// });
 
-const facebookLogin = catchAsync(async (req, res) => {
-  const result = await AuthService.facebookLogin(req.body);
+// const facebookLogin = catchAsync(async (req, res) => {
+//   const result = await AuthService.facebookLogin(req.body);
 
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'User login successfully',
-    data: result,
-  });
-});
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: StatusCodes.OK,
+//     message: 'User login successfully',
+//     data: result,
+//   });
+// });
 
 export const AuthController = {
   verifyEmail,
@@ -150,6 +150,4 @@ export const AuthController = {
   deleteAccount,
   newAccessToken,
   resendVerificationEmail,
-  googleLogin,
-  facebookLogin,
 };
