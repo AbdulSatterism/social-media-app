@@ -16,7 +16,7 @@ const getMyAllNotifications = async (
 
   const [result, total] = await Promise.all([
     Notification.find({ receiverId: userId })
-      .populate('senderId', { name: 1, _id: 0 })
+      .populate('senderId', { name: 1, image: 1, _id: 0 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(size)

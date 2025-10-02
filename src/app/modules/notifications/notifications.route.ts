@@ -25,7 +25,7 @@ router.get(
   NotificationController.getAdminNotificaiton,
 );
 
-router.get(
+router.patch(
   '/admin-notification/:id',
   auth(USER_ROLES.ADMIN),
   NotificationController.getSingleNotification,
