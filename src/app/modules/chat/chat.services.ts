@@ -430,7 +430,7 @@ const getChatInboxMessages = async (
     .skip(skip)
     .limit(limit)
     .populate('sender', 'name image _id')
-    .sort({ createdAt: +1 });
+    .sort({ createdAt: -1 });
 
   // Get total count for pagination
   const total = await Message.countDocuments({ chat: chatId });

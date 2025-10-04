@@ -45,7 +45,7 @@ const socket = (io: Server) => {
 
           const populatedMessage = await Message.findById(
             newMessage._id,
-          ).populate('sender', 'name image -_id');
+          ).populate('sender', 'name image _id');
 
           // Join chat room and emit
           socket.join(chat);
