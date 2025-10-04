@@ -203,6 +203,26 @@ const deleteUserByAdmin = async (adminId: string, userId: string) => {
   return result;
 };
 
+const contactMatch = async (payload: any) => {
+  const allUser = await User.find(
+    {},
+    { _id: 1, image: 1, name: 1, phone: 1 },
+  ).lean();
+  const match = payload
+    .map((item: any) => allUser.find(user => user.phone === item.phone))
+    .filter((user: any) => user !== undefined)
+    .map((user: any) => ({
+      _id: user._id,
+      image: user.image,
+      name: user.name,
+      phone: user.phone,
+    }));
+  const unmatch = payload.filter(
+    (item: any) => !match.some((user: any) => user.phone === item.phone),
+  );
+  return { match, unmatch };
+};
+
 export const UserService = {
   createUserFromDb,
   getUserProfileFromDB,
@@ -212,4 +232,5 @@ export const UserService = {
   getAllUsers,
   deleteUser,
   deleteUserByAdmin,
+  contactMatch,
 };

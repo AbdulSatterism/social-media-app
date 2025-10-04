@@ -116,6 +116,16 @@ const deleteUserByAdmin = catchAsync(async (req, res) => {
   });
 });
 
+const contactMatch = catchAsync(async (req, res) => {
+  const result = await UserService.contactMatch(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Contact Match',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -125,4 +135,5 @@ export const UserController = {
   getAllUser,
   deleteUser,
   deleteUserByAdmin,
+  contactMatch,
 };
