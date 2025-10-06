@@ -209,7 +209,6 @@ const chatListWithLastMessage = async (
   const chats = await Chat.aggregate([
     {
       $match: {
-        type: 'private',
         members: userObjectId,
       },
     },
@@ -245,7 +244,6 @@ const chatListWithLastMessage = async (
 
   // Get total count for pagination
   const total = await Chat.countDocuments({
-    type: 'private',
     members: userObjectId,
   });
   const totalPage = Math.ceil(total / limit);
