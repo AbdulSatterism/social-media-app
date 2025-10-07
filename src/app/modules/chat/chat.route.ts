@@ -66,4 +66,10 @@ router.get(
   ChatController.getChatInboxMessages,
 );
 
+router.delete(
+  '/group-chat/:chatId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  ChatController.deleteGroupChat,
+);
+
 export const ChatRoutes = router;

@@ -164,6 +164,18 @@ const getChatInboxMessages = catchAsync(async (req, res) => {
   });
 });
 
+const deleteGroupChat = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const chatId = req.params.chatId;
+  const result = await ChatService.deleteGroupChat(userId, chatId);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Group deleted successfully',
+    data: result,
+  });
+});
+
 export const ChatController = {
   createPrivateChat,
   createGroupChat,
@@ -175,4 +187,5 @@ export const ChatController = {
   updateGroup,
   getGroupChatDetails,
   getChatInboxMessages,
+  deleteGroupChat,
 };

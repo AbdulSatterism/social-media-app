@@ -471,6 +471,34 @@ const getChatInboxMessages = async (
   };
 };
 
+// group deleted by creator
+
+const deleteGroupChat = async (userId: string, chatId: string) => {
+  const [user, chat] = await Promise.all([
+    User.findById(userId),
+    Chat.findById(chatId),
+  ]);
+
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  if (!chat) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
+  }
+  if (chat.type !== 'group') {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Can only delete group chats');
+  }
+  if (chat.createdBy.toString() !== userId) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Only the group creator can delete the group chat',
+    );
+  }
+
+  await Chat.findByIdAndDelete(chatId);
+  return chat;
+};
+
 export const ChatService = {
   createPrivateChat,
   createGroupChat,
@@ -482,4 +510,5 @@ export const ChatService = {
   updateGroup,
   getGroupChatDetails,
   getChatInboxMessages,
+  deleteGroupChat,
 };
