@@ -68,10 +68,6 @@ router.delete(
   UserController.deleteUserByAdmin,
 );
 
-router.post(
-  '/contact',
-  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  UserController.contactMatch,
-);
+router.post('/contact', UserController.contactMatch);
 
 export const UserRoutes = router;
