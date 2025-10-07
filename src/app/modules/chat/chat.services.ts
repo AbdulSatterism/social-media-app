@@ -190,6 +190,7 @@ const leaveGroupChat = async (chatId: string, memberId: string) => {
 };
 
 // for private chat list with last message
+
 const chatListWithLastMessage = async (
   userId: string,
   query: Record<string, unknown>,
@@ -198,6 +199,7 @@ const chatListWithLastMessage = async (
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
 
+  // ✅ Check user existence
   const isUserExist = await User.isExistUserById(userId);
   if (!isUserExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'user not found');
@@ -205,7 +207,6 @@ const chatListWithLastMessage = async (
 
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  // Fetch private chats where the user is a member, include last message if exists
   const chats = await Chat.aggregate([
     {
       $match: {
@@ -217,12 +218,14 @@ const chatListWithLastMessage = async (
     },
     { $skip: skip },
     { $limit: limit },
+
+    // ✅ Lookup last message
     {
       $lookup: {
         from: 'messages',
-        let: { chat: '$_id' },
+        let: { chatId: '$_id' },
         pipeline: [
-          { $match: { $expr: { $eq: ['$chat', '$$chat'] } } },
+          { $match: { $expr: { $eq: ['$chat', '$$chatId'] } } },
           { $sort: { createdAt: -1 } },
           { $limit: 1 },
         ],
@@ -234,15 +237,38 @@ const chatListWithLastMessage = async (
         lastMessage: { $arrayElemAt: ['$lastMessage', 0] },
       },
     },
-    // No $match for lastMessage, so chats without messages are also included
+
+    // ✅ Conditionally populate members only for private chats
+    {
+      $lookup: {
+        from: 'users',
+        let: { memberIds: '$members' },
+        pipeline: [
+          { $match: { $expr: { $in: ['$_id', '$$memberIds'] } } },
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              image: 1,
+            },
+          },
+        ],
+        as: 'populatedMembers',
+      },
+    },
+    {
+      $addFields: {
+        members: '$populatedMembers',
+      },
+    },
     {
       $project: {
-        members: 0,
+        populatedMembers: 0, // remove temp field
       },
     },
   ]);
 
-  // Get total count for pagination
+  // ✅ Pagination
   const total = await Chat.countDocuments({
     members: userObjectId,
   });
