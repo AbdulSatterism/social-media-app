@@ -27,7 +27,12 @@ const allStories = async (userId: string, query: Record<string, unknown>) => {
   }
 
   const [result, total] = await Promise.all([
-    Story.find().sort({ createdAt: -1 }).skip(skip).limit(size).lean(),
+    Story.find()
+      .populate('author', { name: 1 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(size)
+      .lean(),
     Story.countDocuments(),
   ]);
 
@@ -63,6 +68,7 @@ const myAllStories = async (userId: string, query: Record<string, unknown>) => {
 
   const [result, total] = await Promise.all([
     Story.find({ author: userId })
+      .populate('author', { name: 1 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(size)
@@ -93,7 +99,7 @@ const getStoryById = async (id: string, userId: string) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'needs to be logged in!');
   }
 
-  const result = await Story.findById(id);
+  const result = await Story.findById(id).populate('author', { name: 1 });
 
   if (!result) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Story not found!');
