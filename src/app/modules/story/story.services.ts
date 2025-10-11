@@ -28,7 +28,7 @@ const allStories = async (userId: string, query: Record<string, unknown>) => {
 
   const [result, total] = await Promise.all([
     Story.find()
-      .populate('author', { name: 1 })
+      .populate('author', { name: 1, image: 1 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(size)
