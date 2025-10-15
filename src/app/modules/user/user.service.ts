@@ -11,9 +11,8 @@ import { User } from './user.model';
 import unlinkFile from '../../../shared/unlinkFile';
 import AppError from '../../errors/AppError';
 import { Types } from 'mongoose';
-import { emailTemplate } from '../../../shared/emailTemplate';
-import { emailHelper } from '../../../helpers/emailHelper';
 import { AdminNotification } from '../notifications/notifications.model';
+import { sendSMS } from '../../../util/verifyByTwilio';
 
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
@@ -32,19 +31,10 @@ const createUserFromDb = async (payload: IUser) => {
   }
 
   const otp = generateOTP();
-  const emailValues = {
-    name: result.name || 'User',
-    otp,
-    email: result.email,
-  };
-
-  // send email
-  const accountEmailTemplate = emailTemplate.createAccount(emailValues);
-  emailHelper.sendEmail(accountEmailTemplate);
 
   // send sms with phone number
-  // const message = `Welcome to re social media! Your one time code for verification is ${otp}. Use it to verify your account.`;
-  // await sendSMS(payload?.phone, message);
+  const message = `Welcome to re: Your one-time code for verification is ${otp}.`;
+  await sendSMS(payload?.phone, message);
 
   // create notificaiton for admin
 

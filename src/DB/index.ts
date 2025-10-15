@@ -5,13 +5,13 @@ import { USER_ROLES } from '../enums/user';
 import { logger } from '../shared/logger';
 
 const superUser = {
-  name: 'Barbar salon',
+  name: 'RE SOCIAL MEDIA',
   role: USER_ROLES.ADMIN,
   email: config.admin.email,
   password: config.admin.password,
   phone: '14524578',
   verified: true,
-  gender: 'MALE',
+  gender: 'FEMALE',
 };
 
 const seedAdmin = async () => {
@@ -22,10 +22,10 @@ const seedAdmin = async () => {
       await User.create(superUser);
       logger.info(colors.green('✔ admin created successfully!'));
     } else {
-      console.log('Admin already exists.');
+      logger.info(colors.yellow('✔ admin already exist!'));
     }
   } catch (error) {
-    console.error('Error creating admin:', error);
+    logger.error(colors.red('❌ admin not created!'), error);
   }
 };
 

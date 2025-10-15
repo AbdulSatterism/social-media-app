@@ -20,7 +20,6 @@ export const sendSMS = async (to: string, message: string): Promise<void> => {
     });
     logger.info(colors.green(`✅message send to ${to} phone number`));
   } catch (error: any) {
-    console.log('error in twilio', error);
     logger.error('❌ Failed to send SMS:', error.message || error);
     throw new AppError(StatusCodes.FORBIDDEN, 'Failed to send SMS');
   }

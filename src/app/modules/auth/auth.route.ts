@@ -34,12 +34,6 @@ router.post(
   AuthController.resetPassword,
 );
 
-// router.delete(
-//   '/delete-account',
-//   auth(USER_ROLES.USER),
-//   AuthController.deleteAccount
-// );
-
 router.post(
   '/change-password',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),

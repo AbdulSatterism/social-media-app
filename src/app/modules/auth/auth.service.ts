@@ -20,13 +20,13 @@ import generateOTP from '../../../util/generateOTP';
 import { User } from '../user/user.model';
 import { ResetToken } from '../resetToken/resetToken.model';
 import AppError from '../../errors/AppError';
-import unlinkFile from '../../../shared/unlinkFile';
-import { downloadImage, facebookToken } from './auth.lib';
+import { sendSMS } from '../../../util/verifyByTwilio';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
-  const { email, password } = payload;
-  const isExistUser = await User.findOne({ email }).select('+password');
+  const { phone, password } = payload;
+
+  const isExistUser = await User.findOne({ phone }).select('+password');
   if (!isExistUser) {
     throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -50,7 +50,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
   const tokenPayload = {
     id: isExistUser._id,
     role: isExistUser.role,
-    email: isExistUser.email,
+    phone: isExistUser.phone,
   };
 
   //create access token
@@ -74,33 +74,35 @@ const loginUserFromDB = async (payload: ILoginData) => {
 };
 
 //forget password
-const forgetPasswordToDB = async (email: string) => {
-  const isExistUser = await User.isExistUserByEmail(email);
+const forgetPasswordToDB = async (phone: string) => {
+  const isExistUser = await User.findOne({ phone: phone }).select(
+    '+authentication',
+  );
   if (!isExistUser) {
     throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
-  //send mail
   const otp = generateOTP();
-  const value = {
-    otp,
-    email: isExistUser.email,
-  };
-  const forgetPassword = emailTemplate.resetPassword(value);
-  emailHelper.sendEmail(forgetPassword);
+  //send sms
+  const message = `re: Your one-time code for verification is ${otp}.`;
+  await sendSMS(isExistUser?.phone, message);
 
   //save to DB
   const authentication = {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 20 * 60000),
   };
-  await User.findOneAndUpdate({ email }, { $set: { authentication } });
+  await User.findOneAndUpdate(
+    { phone: isExistUser.phone },
+    { $set: { authentication } },
+  );
 };
 
 const verifyEmailToDB = async (payload: IVerifyEmail) => {
-  const { email, oneTimeCode } = payload;
+  const { phone, oneTimeCode } = payload;
 
-  const isExistUser = await User.findOne({ email }).select('+authentication');
+  const isExistUser = await User.findOne({ phone }).select('+authentication');
+
   if (!isExistUser) {
     throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -108,11 +110,10 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
   if (!oneTimeCode) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
-      'Please give the otp, check your email we send a code',
+      'Please give the otp, check your phone message inbox',
     );
   }
 
-  // console.log(isExistUser.authentication?.oneTimeCode, { payload });
   if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
   }
@@ -128,7 +129,7 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
   const tokenPayload = {
     id: isExistUser._id,
     role: isExistUser.role,
-    email: isExistUser.email,
+    phone: isExistUser.phone,
   };
 
   //create access token
@@ -153,7 +154,7 @@ const verifyEmailToDB = async (payload: IVerifyEmail) => {
       { _id: isExistUser._id },
       { verified: true, authentication: { oneTimeCode: null, expireAt: null } },
     );
-    message = 'Your email has been successfully verified.';
+    message = 'Your account has been successfully verified.';
     data = { user: isExistUser, accessToken, refreshToken };
   } else {
     await User.findOneAndUpdate(
@@ -311,7 +312,7 @@ const newAccessTokenToUser = async (token: string) => {
 
   //create token
   const accessToken = jwtHelper.createToken(
-    { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
+    { id: isExistUser._id, role: isExistUser.role, phone: isExistUser.phone },
     config.jwt.jwt_secret as Secret,
     config.jwt.jwt_expire_in as string,
   );
@@ -319,14 +320,14 @@ const newAccessTokenToUser = async (token: string) => {
   return { accessToken };
 };
 
-const resendVerificationEmailToDB = async (email: string) => {
+const resendVerificationEmailToDB = async (phone: string) => {
   // Find the user by ID
-  const existingUser: any = await User.findOne({ email: email }).lean();
+  const existingUser: any = await User.findOne({ phone: phone }).lean();
 
   if (!existingUser) {
     throw new AppError(
       StatusCodes.NOT_FOUND,
-      'User with this email does not exist!',
+      'User with this number does not exist!',
     );
   }
 
@@ -336,13 +337,9 @@ const resendVerificationEmailToDB = async (email: string) => {
 
   // Generate OTP and prepare email
   const otp = generateOTP();
-  const emailValues = {
-    name: existingUser.name,
-    otp,
-    email: existingUser.email,
-  };
-  const accountEmailTemplate = emailTemplate.createAccount(emailValues);
-  emailHelper.sendEmail(accountEmailTemplate);
+  //send sms
+  const message = `re: Your one-time code for verification is ${otp}.`;
+  await sendSMS(existingUser?.phone, message);
 
   // Update user with authentication details
   const authentication = {
@@ -351,188 +348,11 @@ const resendVerificationEmailToDB = async (email: string) => {
   };
 
   await User.findOneAndUpdate(
-    { email: email },
+    { phone: existingUser?.phone },
     { $set: { authentication } },
     { new: true },
   );
 };
-
-//! login with google
-
-interface IGoogleLoginPayload {
-  email: string;
-  name: string;
-  image?: string;
-  uid: string;
-}
-
-// const googleLogin = async (payload: IGoogleLoginPayload) => {
-//   const { email, name, image, uid } = payload;
-
-//   if (!email || !uid) {
-//     throw new AppError(StatusCodes.BAD_REQUEST, 'Email and UID are required');
-//   }
-
-//   // Check if user exists by email
-//   let user = await User.findOne({ email });
-
-//   if (user?.image && image) {
-//     unlinkFile(user?.image);
-//   }
-
-//   if (!user) {
-//     // Create new user if doesn't exist
-//     user = await User.create({
-//       email,
-//       name,
-//       image: image || '',
-//       googleId: uid,
-//       role: 'USER',
-//       verified: true, // Google accounts are pre-verified
-//     });
-//   } else if (!user.googleId) {
-//     // Update existing user with Google ID if they haven't logged in with Google before
-//     user = await User.findByIdAndUpdate(
-//       user._id,
-//       {
-//         googleId: uid,
-//         verified: true,
-//         image: image || user.image, // Keep existing image if no new image provided
-//       },
-//       { new: true },
-//     );
-//   }
-
-//   if (!user) {
-//     throw new AppError(
-//       StatusCodes.INTERNAL_SERVER_ERROR,
-//       'Failed to create or update user',
-//     );
-//   }
-
-//   // Generate tokens for authentication
-//   const tokenPayload = {
-//     id: user._id,
-//     email: user.email,
-//     role: user.role,
-//   };
-
-//   const accessToken = jwtHelper.createToken(
-//     tokenPayload,
-//     config.jwt.jwt_secret as Secret,
-//     config.jwt.jwt_expire_in as string,
-//   );
-
-//   const refreshToken = jwtHelper.createToken(
-//     tokenPayload,
-//     config.jwt.jwtRefreshSecret as Secret,
-//     config.jwt.jwtRefreshExpiresIn as string,
-//   );
-
-//   // Remove sensitive data before sending response
-//   const userObject: any = user.toObject();
-//   delete userObject.password;
-//   delete userObject.authentication;
-
-//   return {
-//     user: userObject,
-//     accessToken,
-//     refreshToken,
-//   };
-// };
-
-// const facebookLogin = async (payload: { token: string }) => {
-//   if (!payload.token) {
-//     throw new AppError(StatusCodes.BAD_REQUEST, 'Facebook token is required');
-//   }
-
-//   try {
-//     const userData = await facebookToken(payload.token);
-
-//     if (!userData?.email) {
-//       throw new AppError(
-//         StatusCodes.BAD_REQUEST,
-//         'Unable to get email from Facebook account',
-//       );
-//     }
-
-//     // Download Facebook image and get local URL/path
-//     let localImage = '';
-//     if (userData.picture?.data?.url) {
-//       localImage = await downloadImage(
-//         userData.picture.data.url,
-//         userData?.id || '',
-//       );
-//     }
-
-//     const userFields = {
-//       name: userData.name || '',
-//       email: userData.email,
-//       image: localImage || '',
-//       facebookId: userData.id,
-//       role: 'USER' as const,
-//       verified: true,
-//     };
-
-//     let user = await User.findOne({
-//       $or: [{ email: userData.email }, { facebookId: userData.id }],
-//     });
-
-//     if (user?.image && localImage) {
-//       unlinkFile(user?.image);
-//     }
-
-//     if (!user) {
-//       user = await User.create(userFields);
-//     } else if (!user.facebookId) {
-//       user = await User.findByIdAndUpdate(
-//         user._id,
-//         {
-//           ...userFields,
-//           image: userFields.image || user.image,
-//           name: userFields.name || user.name,
-//         },
-//         { new: true },
-//       );
-//     }
-
-//     if (!user) {
-//       throw new AppError(
-//         StatusCodes.INTERNAL_SERVER_ERROR,
-//         'Failed to create or update user',
-//       );
-//     }
-
-//     const tokenPayload = {
-//       id: user._id,
-//       email: user.email,
-//       role: user.role,
-//     };
-
-//     const [accessToken, refreshToken] = await Promise.all([
-//       jwtHelper.createToken(
-//         tokenPayload,
-//         config.jwt.jwt_secret as Secret,
-//         config.jwt.jwt_expire_in as string,
-//       ),
-//       jwtHelper.createToken(
-//         tokenPayload,
-//         config.jwt.jwtRefreshSecret as Secret,
-//         config.jwt.jwtRefreshExpiresIn as string,
-//       ),
-//     ]);
-
-//     const { password, authentication, ...userObject } = user.toObject();
-
-//     return { user: userObject, accessToken, refreshToken };
-//   } catch (error) {
-//     if (error instanceof AppError) throw error;
-//     throw new AppError(
-//       StatusCodes.INTERNAL_SERVER_ERROR,
-//       'Error processing Facebook login',
-//     );
-//   }
-// };
 
 export const AuthService = {
   verifyEmailToDB,

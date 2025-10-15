@@ -4,8 +4,8 @@ import { Model } from 'mongoose';
 
 export type IUser = {
   name?: string;
-  email: string;
-  phone?: string;
+  email?: string;
+  phone: string;
   password: string;
   role?: 'ADMIN' | 'USER';
   gender?: 'MALE' | 'FEMALE' | 'OTHERS';
@@ -23,7 +23,7 @@ export type IUser = {
 
 export type UserModal = {
   isExistUserById(id: string): any;
-  isExistUserByEmail(email: string): any;
+  isExistUserByPhone(phone: string): any;
   isAccountCreated(id: string): any;
   isMatchPassword(password: string, hashPassword: string): boolean;
 } & Model<IUser>;

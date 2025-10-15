@@ -35,13 +35,13 @@ const loginUser = catchAsync(async (req, res) => {
 });
 
 const forgetPassword = catchAsync(async (req, res) => {
-  const email = req.body.email;
-  const result = await AuthService.forgetPasswordToDB(email);
+  const phone = req.body.phone;
+  const result = await AuthService.forgetPasswordToDB(phone);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Please check your email, we send a OTP!',
+    message: 'Please check your inbox, we send a OTP!',
     data: result,
   });
 });
@@ -108,38 +108,16 @@ const newAccessToken = catchAsync(async (req, res) => {
 });
 
 const resendVerificationEmail = catchAsync(async (req, res) => {
-  const { email } = req.body;
-  const result = await AuthService.resendVerificationEmailToDB(email);
+  const { phone } = req.body;
+  const result = await AuthService.resendVerificationEmailToDB(phone);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Generate OTP and send successfully',
+    message: 'OTP and send successfully',
     data: result,
   });
 });
-
-// const googleLogin = catchAsync(async (req, res) => {
-//   const result = await AuthService.googleLogin(req.body);
-
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: StatusCodes.OK,
-//     message: 'User login successfully',
-//     data: result,
-//   });
-// });
-
-// const facebookLogin = catchAsync(async (req, res) => {
-//   const result = await AuthService.facebookLogin(req.body);
-
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: StatusCodes.OK,
-//     message: 'User login successfully',
-//     data: result,
-//   });
-// });
 
 export const AuthController = {
   verifyEmail,

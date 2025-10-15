@@ -13,7 +13,7 @@ const createUser = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Please check your email to verify your account.',
+    message: 'Please check your inbox to verify your account.',
   });
 });
 
@@ -49,16 +49,6 @@ const getUserProfile = catchAsync(async (req, res) => {
 //update profile
 const updateProfile = catchAsync(async (req, res) => {
   const user = req.user;
-
-  // let image;
-  // if (req.files && 'image' in req.files && req.files.image[0]) {
-  //   image = `/images/${req.files.image[0].filename}`;
-  // }
-
-  // const value = {
-  //   image,
-  //   ...req.body,
-  // };
 
   const result = await UserService.updateProfileToDB(user, req.body);
 

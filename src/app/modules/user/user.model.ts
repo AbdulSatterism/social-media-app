@@ -14,7 +14,7 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       sparse: true,
       lowercase: true,
@@ -35,7 +35,7 @@ const userSchema = new Schema<IUser, UserModal>(
 
     phone: {
       type: String,
-      required: false,
+      required: true,
       unique: true,
       sparse: true,
       trim: true,
@@ -105,13 +105,13 @@ userSchema.statics.isExistUserById = async (id: string) => {
   return isExist;
 };
 
-userSchema.statics.isExistUserByEmail = async (email: string) => {
+userSchema.statics.isExistUserByPhone = async (email: string) => {
   const isExist = await User.findOne({ email });
   return isExist;
 };
 
 // static helpers
-userSchema.statics.findByEmailOrPhone = function (identifier: string) {
+userSchema.statics.findByPhone = function (identifier: string) {
   // rudimentary check
   const isEmail = identifier.includes('@');
   return this.findOne(
@@ -137,12 +137,11 @@ userSchema.statics.isMatchPassword = async (
 userSchema.pre('save', async function (next) {
   //check user
   const isExist = await User.findOne({
-    email: this.email,
-    $or: [{ phone: this.phone }],
+    phone: this.phone,
   });
 
   if (isExist) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'phone or email already used!');
+    throw new AppError(StatusCodes.BAD_REQUEST, 'phone number already used!');
   }
 
   //password hash

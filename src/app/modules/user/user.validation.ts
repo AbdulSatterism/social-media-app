@@ -2,13 +2,10 @@ import { z } from 'zod';
 
 const createUserSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address').optional(),
     phone: z.string().optional(),
     password: z.string(),
   }),
 });
-
-//TODO: need update more fields for this site
 
 //* change some system
 const updateUserProfileSchema = z.object({
