@@ -20,6 +20,18 @@ const deleteMessageBySender = catchAsync(async (req, res) => {
   });
 });
 
+const sendtMessage = catchAsync(async (req, res) => {
+  const result = await MessageService.sendMessage(req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Message sent successfully',
+    data: result,
+  });
+});
+
 export const MessageController = {
   deleteMessageBySender,
+  sendtMessage,
 };

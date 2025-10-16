@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { Message } from './message.model';
 import { User } from '../user/user.model';
-
-// delete single message by  sender
+import { Chat } from '../chat/chat.model';
 
 const deleteMessageBySender = async (messageId: string, senderId: string) => {
   const isUserExist = await User.isExistUserById(senderId);
@@ -29,6 +29,37 @@ const deleteMessageBySender = async (messageId: string, senderId: string) => {
   return result;
 };
 
+// send  message in multiple  chat inbox
+
+const sendMessage = async (payload: any) => {
+  const { senderId, chatIds, message, image, video, contentType } = payload;
+  const media = contentType === 'image' ? image : video;
+
+  const isUserExist = await User.isExistUserById(senderId);
+  if (!isUserExist) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  const chats = await Chat.find({ _id: { $in: chatIds } });
+  if (chats.length !== chatIds.length) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'One or more chat(s) not found');
+  }
+
+  // 4️⃣ Create message objects for each chat
+  const newMessages = chatIds.map((chatId: string) => ({
+    chat: chatId,
+    sender: senderId,
+    message,
+    media,
+    contentType,
+  }));
+
+  // 5️⃣ Insert all at once (for multiple chats)
+  const result = await Message.insertMany(newMessages);
+  return result;
+};
+
 export const MessageService = {
   deleteMessageBySender,
+  sendMessage,
 };

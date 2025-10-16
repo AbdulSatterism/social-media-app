@@ -26,4 +26,14 @@ router.delete(
   MessageController.deleteMessageBySender,
 );
 
+router.post(
+  '/send-message',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  fileUploader({
+    image: { fileType: 'images', size: 50 * 1024 * 1024 }, // 5MB
+    video: { fileType: 'videos', size: 1000 * 1024 * 1024 }, // 100MB
+  }),
+  MessageController.sendtMessage,
+);
+
 export const MessageRoutes = router;
