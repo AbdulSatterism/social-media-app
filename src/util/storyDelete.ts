@@ -8,7 +8,7 @@ export const storyDeleteJob = () => {
   // Every hour
   cron.schedule('0 * * * *', async () => {
     const now = Date.now();
-    const threshold = new Date(now - 24 * 60 * 60 * 1000); // 24h ago
+    const threshold = new Date(now - 48 * 60 * 60 * 1000); // 24h ago
 
     try {
       // For most apps, a single deleteMany is fine:
