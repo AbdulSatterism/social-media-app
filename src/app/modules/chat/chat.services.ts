@@ -8,6 +8,7 @@ import { Notification } from '../notifications/notifications.model';
 import { User } from '../user/user.model';
 import { Message } from '../message/message.model';
 import unlinkFile from '../../../shared/unlinkFile';
+import { sendSMS } from '../../../util/verifyByTwilio';
 
 const createPrivateChat = async (creatorId: string, participantId: string) => {
   if (creatorId === participantId) {
@@ -19,32 +20,85 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
 
   // Sort the member pair to enforce consistent ordering
   const [a, b] = sortMembers(creatorId, participantId);
+  const objectIdA = new mongoose.Types.ObjectId(a);
+  const objectIdB = new mongoose.Types.ObjectId(b);
 
+  // Try to find existing private chat (members are stored in sorted order)
   const existingChat = await Chat.findOne({
     type: 'private',
-    'members.0': a,
-    'members.1': b,
+    'members.0': objectIdA,
+    'members.1': objectIdB,
   });
 
   if (existingChat) return existingChat;
 
+  // Verify both users exist before creating chat
+  const [creator, participant] = await Promise.all([
+    User.findById(creatorId),
+    User.findById(participantId),
+  ]);
+
+  if (!creator || !participant) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'One or both users not found');
+  }
+
   const chat = await Chat.create({
     type: 'private',
     name: 'private chat',
-    members: [new mongoose.Types.ObjectId(a), new mongoose.Types.ObjectId(b)],
+    members: [objectIdA, objectIdB],
     createdBy: new mongoose.Types.ObjectId(creatorId),
   } as IChat);
 
   // Create a notification for the participant
-
   await Notification.create({
-    content: "Want's to talk with you.",
+    content: `Mr. ${creator?.name} wants to talk with you`,
     senderId: creatorId,
     receiverId: participantId,
   });
 
+  // send sms with phone number
+  const message = `${creator?.name} wants to talk with you.`;
+  await sendSMS(participant?.phone, message);
+
   return chat;
 };
+
+// const createPrivateChat = async (creatorId: string, participantId: string) => {
+//   if (creatorId === participantId) {
+//     throw new AppError(
+//       StatusCodes.BAD_REQUEST,
+//       'Cannot create a chat with yourself.',
+//     );
+//   }
+
+//   // Sort the member pair to enforce consistent ordering
+//   const [a, b] = sortMembers(creatorId, participantId);
+
+//   const existingChat = await Chat.findOne({
+//     type: 'private',
+//     'members.0': a,
+//     'members.1': b,
+//   });
+
+//   if (existingChat) return existingChat;
+
+//   const chat = await Chat.create({
+//     type: 'private',
+//     name: 'private chat',
+//     members: [new mongoose.Types.ObjectId(a), new mongoose.Types.ObjectId(b)],
+//     createdBy: new mongoose.Types.ObjectId(creatorId),
+//   } as IChat);
+
+//   // Create a notification for the participant
+
+//   await Notification.create({
+//     content: "Want's to talk with you.",
+//     senderId: creatorId,
+//     receiverId: participantId,
+//   });
+
+//   return chat;
+// };
 
 const createGroupChat = async (creatorId: string, members: string[]) => {
   if (!members || members.length === 0) {
