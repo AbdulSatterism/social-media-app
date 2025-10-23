@@ -2,6 +2,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { AdminNotification, Notification } from './notifications.model';
 import AppError from '../../errors/AppError';
+import { sendSMS } from '../../../util/verifyByTwilio';
 
 // my all notification
 
@@ -108,10 +109,22 @@ const deleteNotificationByAdmin = async (id: string) => {
   return notification;
 };
 
+// send message by the admin dashboard by phone number and message
+
+const sendInboxMessageByAdmin = async (payload: {
+  phone: string;
+  message: string;
+}) => {
+  const { phone, message } = payload;
+  const result = await sendSMS(phone, message);
+  return result;
+};
+
 export const NotificationService = {
   getMyAllNotifications,
   deleteNotification,
   getAllAdminNotification,
   getSingleNotification,
   deleteNotificationByAdmin,
+  sendInboxMessageByAdmin,
 };

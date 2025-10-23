@@ -77,10 +77,22 @@ const deleteNotificationByAdmin = catchAsync(async (req, res) => {
   });
 });
 
+const sendInboxMessageByAdmin = catchAsync(async (req, res) => {
+  const result = await NotificationService.sendInboxMessageByAdmin(req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Message sent successfully',
+    data: result,
+  });
+});
+
 export const NotificationController = {
   getMyAllNotifications,
   deleteNotification,
   getAdminNotificaiton,
   getSingleNotification,
+  sendInboxMessageByAdmin,
   deleteNotificationByAdmin,
 };

@@ -37,4 +37,10 @@ router.delete(
   NotificationController.deleteNotificationByAdmin,
 );
 
+router.post(
+  '/admin-notification/send-inbox-message',
+  auth(USER_ROLES.ADMIN),
+  NotificationController.sendInboxMessageByAdmin,
+);
+
 export const NotificationRoutes = router;
