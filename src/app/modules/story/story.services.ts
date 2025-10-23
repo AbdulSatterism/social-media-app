@@ -108,9 +108,37 @@ const getStoryById = async (id: string, userId: string) => {
   return result;
 };
 
+// delete story author
+
+const deleteStory = async (userId: string, storyId: string) => {
+  const [user, story] = await Promise.all([
+    User.findById(userId),
+    Story.findById(storyId),
+  ]);
+
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found!');
+  }
+
+  if (!story) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Story not found!');
+  }
+
+  if (story.author.toString() !== userId) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'You are not allowed to delete this story',
+    );
+  }
+
+  const result = await Story.findByIdAndDelete(storyId);
+  return result;
+};
+
 export const StoryService = {
   createStory,
   getStoryById,
   allStories,
   myAllStories,
+  deleteStory,
 };

@@ -68,9 +68,23 @@ const getStoryById = catchAsync(async (req, res) => {
   });
 });
 
+const deleteStory = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const storyId = req.params.id;
+  const result = await StoryService.deleteStory(userId, storyId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Story deleted successfully',
+    data: result,
+  });
+});
+
 export const StoryController = {
   createStory,
   allStories,
   getStoryById,
   myAllStories,
+  deleteStory,
 };
