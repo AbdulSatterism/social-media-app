@@ -15,7 +15,6 @@ const userSchema = new Schema<IUser, UserModal>(
     email: {
       type: String,
       required: false,
-      unique: true,
     },
 
     password: {
