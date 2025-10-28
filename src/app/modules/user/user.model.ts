@@ -88,8 +88,6 @@ const userSchema = new Schema<IUser, UserModal>(
   { timestamps: true },
 );
 
-userSchema.index({ email: 1, phone: 1 }, { unique: true });
-
 //exist user check
 userSchema.statics.isExistUserById = async (id: string) => {
   const isExist = await User.findById(id);
