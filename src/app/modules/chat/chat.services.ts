@@ -57,48 +57,11 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
   });
 
   // send sms with phone number
-  const message = `${creator?.name} wants to talk with you.`;
+  const message = `You’ve got a new message, tap to see it!`;
   await sendSMS(participant?.phone, message);
 
   return chat;
 };
-
-// const createPrivateChat = async (creatorId: string, participantId: string) => {
-//   if (creatorId === participantId) {
-//     throw new AppError(
-//       StatusCodes.BAD_REQUEST,
-//       'Cannot create a chat with yourself.',
-//     );
-//   }
-
-//   // Sort the member pair to enforce consistent ordering
-//   const [a, b] = sortMembers(creatorId, participantId);
-
-//   const existingChat = await Chat.findOne({
-//     type: 'private',
-//     'members.0': a,
-//     'members.1': b,
-//   });
-
-//   if (existingChat) return existingChat;
-
-//   const chat = await Chat.create({
-//     type: 'private',
-//     name: 'private chat',
-//     members: [new mongoose.Types.ObjectId(a), new mongoose.Types.ObjectId(b)],
-//     createdBy: new mongoose.Types.ObjectId(creatorId),
-//   } as IChat);
-
-//   // Create a notification for the participant
-
-//   await Notification.create({
-//     content: "Want's to talk with you.",
-//     senderId: creatorId,
-//     receiverId: participantId,
-//   });
-
-//   return chat;
-// };
 
 const createGroupChat = async (creatorId: string, members: string[]) => {
   if (!members || members.length === 0) {

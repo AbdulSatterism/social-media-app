@@ -16,15 +16,6 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       required: false,
       unique: true,
-      sparse: true,
-      lowercase: true,
-      trim: true,
-      // normalize: empty/invalid -> undefined so sparse unique is ignored
-      set: (v: unknown) => {
-        if (typeof v !== 'string') return undefined;
-        const s = v.trim().toLowerCase();
-        return s.length ? s : undefined;
-      },
     },
 
     password: {
@@ -52,7 +43,7 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     image: {
       type: String,
-      default: '/public/user.jpg',
+      default: null,
     },
     gender: {
       type: String,
