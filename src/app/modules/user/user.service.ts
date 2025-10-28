@@ -17,11 +17,16 @@ import { sendSMS } from '../../../util/verifyByTwilio';
 const createUserFromDb = async (payload: IUser) => {
   payload.role = USER_ROLES.USER;
 
-  if (!payload.phone && !payload.email) {
-    throw new AppError(
-      StatusCodes.BAD_REQUEST,
-      'Please provide email or phone number',
-    );
+  if (!payload.phone) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide phone number');
+  }
+
+  const existingUser = await User.findOne({ phone: payload.phone });
+
+  if (existingUser) {
+    if (!existingUser.verified || !existingUser.image || !existingUser.name) {
+      await User.deleteOne({ phone: payload.phone });
+    }
   }
 
   const result = await User.create(payload);
@@ -47,13 +52,11 @@ const createUserFromDb = async (payload: IUser) => {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 20 * 60000),
   };
-  const updatedUser = await User.findOneAndUpdate(
+
+  await User.findOneAndUpdate(
     { _id: result._id },
     { $set: { authentication } },
   );
-  if (!updatedUser) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'User not found for update');
-  }
 
   return result;
 };

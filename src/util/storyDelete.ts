@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import cron from 'node-cron';
 import { logger } from '../shared/logger';
 import colors from 'colors';
@@ -8,52 +9,66 @@ import { sendSMS } from './verifyByTwilio';
 // Send SMS notifications before deleting stories and messages
 const sendExpiryNotifications = async () => {
   const now = Date.now();
-  const oneHourFromNow = new Date(now + 2 * 60 * 60 * 1000);
-  const twoHoursFromNow = new Date(now + 3 * 60 * 60 * 1000);
+  const twoHoursFromNow = new Date(now + 2 * 60 * 60 * 1000); // 2 hours from now
+  const threeHoursFromNow = new Date(now + 3 * 60 * 60 * 1000); // 3 hours from now
 
   try {
     // Find stories that will expire in 2-3 hours
-    // const expiringStories = await Story.find({
-    //   createdAt: {
-    //     $gte: oneHourFromNow,
-    //     $lt: twoHoursFromNow,
-    //   },
-    // }).populate('author');
-
-    // console.log('Expiring Stories:', expiringStories);
+    const expiringStories = await Story.find({
+      createdAt: {
+        $gte: threeHoursFromNow,
+        $lt: twoHoursFromNow,
+      },
+    }).populate('author');
 
     // Find messages that will expire in 2-3 hours
     const expiringMessages = await Message.find({
       createdAt: {
-        $gte: oneHourFromNow,
+        $gte: threeHoursFromNow,
         $lt: twoHoursFromNow,
       },
     }).populate('sender');
 
-    console.log('Expiring Messages:', expiringMessages);
+    // Send notifications for stories (unique phones only)
+    const storyPhones = new Set<string>();
+    expiringStories.forEach(story => {
+      const author = story.author as any;
+      const phone = (author?.phone as string | undefined)?.trim();
+      if (phone) storyPhones.add(phone);
+    });
 
-    // Send notifications for stories
-    // expiringStories.forEach(async story => {
-    //   if (story.author?.phone) {
-    //     const smsText = `Your story will disappear in 2 hours. Save it before it's gone!`;
-    //     await sendSMS(story.author.phone, smsText);
-    //   }
-    // });
+    for (const phone of storyPhones) {
+      try {
+        const smsText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
+        await sendSMS(phone, smsText);
+      } catch (err) {
+        logger.error('Error sending story SMS to ' + phone, err);
+      }
+    }
 
-    // Send notifications for messages
-    // expiringMessages.forEach(async message => {
-    //   if (message.sender?.phone) {
-    //     const smsText = `Your message will disappear in 2 hours. Save it before it's gone!`;
-    //     await sendSMS(message.sender.phone, smsText);
-    //   }
-    // });
+    // Send notifications for messages (unique phones only)
+    const messagePhones = new Set<string>();
+    expiringMessages.forEach(message => {
+      const sender = message.sender as any;
+      const phone = (sender?.phone as string | undefined)?.trim();
+      if (phone) messagePhones.add(phone);
+    });
+
+    for (const phone of messagePhones) {
+      try {
+        const smsText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
+        await sendSMS(phone, smsText);
+      } catch (err) {
+        logger.error('Error sending message SMS to ' + phone, err);
+      }
+    }
   } catch (err) {
     logger.error('[expiryNotification] Error sending notifications:', err);
   }
 };
 
-// Schedule notification job to run every minute (for testing)
-cron.schedule('*/1 * * * *', sendExpiryNotifications);
+// Schedule the job to run every hour
+cron.schedule('0 * * * *', sendExpiryNotifications);
 
 export const storyDeleteJob = () => {
   // Every hour
