@@ -59,7 +59,21 @@ const sendMessage = async (payload: any) => {
   return result;
 };
 
+// update message view status
+const updateMessageViewStatus = async (messageId: string) => {
+  const message = await Message.findById(messageId);
+  if (!message) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Message not found');
+  }
+
+  message.view = true;
+  await message.save();
+
+  return message;
+};
+
 export const MessageService = {
   deleteMessageBySender,
   sendMessage,
+  updateMessageViewStatus,
 };

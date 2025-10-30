@@ -36,4 +36,10 @@ router.post(
   MessageController.sendtMessage,
 );
 
+router.patch(
+  '/view-status/:messageId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  MessageController.updateMessageViewStatus,
+);
+
 export const MessageRoutes = router;

@@ -31,7 +31,21 @@ const sendtMessage = catchAsync(async (req, res) => {
   });
 });
 
+const updateMessageViewStatus = catchAsync(async (req, res) => {
+  const { messageId } = req.params;
+
+  await MessageService.updateMessageViewStatus(messageId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Message viewed',
+    data: null,
+  });
+});
+
 export const MessageController = {
   deleteMessageBySender,
   sendtMessage,
+  updateMessageViewStatus,
 };
