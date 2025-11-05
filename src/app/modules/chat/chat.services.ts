@@ -502,14 +502,14 @@ const deleteGroupChat = async (userId: string, chatId: string) => {
   if (!chat) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Chat not found');
   }
-  if (chat.type !== 'group') {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Can only delete group chats');
-  }
-  if (chat.createdBy.toString() !== userId) {
-    throw new AppError(
-      StatusCodes.FORBIDDEN,
-      'Only the group creator can delete the group chat',
-    );
+
+  if (chat.type === 'group') {
+    if (chat.createdBy.toString() !== userId) {
+      throw new AppError(
+        StatusCodes.FORBIDDEN,
+        'Only the group creator can delete the group chat',
+      );
+    }
   }
 
   await Chat.findByIdAndDelete(chatId);

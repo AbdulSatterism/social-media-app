@@ -67,7 +67,7 @@ router.get(
 );
 
 router.delete(
-  '/group-chat/:chatId',
+  '/delete-chat/:chatId',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   ChatController.deleteGroupChat,
 );

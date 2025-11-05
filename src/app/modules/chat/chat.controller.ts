@@ -171,7 +171,7 @@ const deleteGroupChat = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Group deleted successfully',
+    message: 'chat deleted successfully',
     data: result,
   });
 });

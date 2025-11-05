@@ -3,7 +3,6 @@ import cron from 'node-cron';
 import { logger } from '../shared/logger';
 import colors from 'colors';
 import { Story } from '../app/modules/story/story.model';
-import { Message } from '../app/modules/message/message.model';
 import { sendSMS } from './verifyByTwilio';
 
 // Send SMS notifications before deleting stories and messages
@@ -21,14 +20,6 @@ const sendExpiryNotifications = async () => {
       },
     }).populate('author');
 
-    // Find messages that will expire in 2-3 hours
-    const expiringMessages = await Message.find({
-      createdAt: {
-        $gte: threeHoursFromNow,
-        $lt: twoHoursFromNow,
-      },
-    }).populate('sender');
-
     // Send notifications for stories (unique phones only)
     const storyPhones = new Set<string>();
     expiringStories.forEach(story => {
@@ -43,23 +34,6 @@ const sendExpiryNotifications = async () => {
         await sendSMS(phone, smsText);
       } catch (err) {
         logger.error('Error sending story SMS to ' + phone, err);
-      }
-    }
-
-    // Send notifications for messages (unique phones only)
-    const messagePhones = new Set<string>();
-    expiringMessages.forEach(message => {
-      const sender = message.sender as any;
-      const phone = (sender?.phone as string | undefined)?.trim();
-      if (phone) messagePhones.add(phone);
-    });
-
-    for (const phone of messagePhones) {
-      try {
-        const smsText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
-        await sendSMS(phone, smsText);
-      } catch (err) {
-        logger.error('Error sending message SMS to ' + phone, err);
       }
     }
   } catch (err) {
@@ -94,23 +68,23 @@ export const storyDeleteJob = () => {
 
 // Message delete job
 
-export const messageDeleteJob = () => {
-  // Every hour
-  cron.schedule('0 * * * *', async () => {
-    const now = Date.now();
-    const threshold = new Date(now - 48 * 60 * 60 * 1000); // 24h ago
+// export const messageDeleteJob = () => {
+//   // Every hour
+//   cron.schedule('0 * * * *', async () => {
+//     const now = Date.now();
+//     const threshold = new Date(now - 48 * 60 * 60 * 1000); // 24h ago
 
-    try {
-      const res = await Message.deleteMany({ createdAt: { $lt: threshold } });
-      if (res.deletedCount) {
-        logger.info(
-          colors.green(
-            `[messageExpiry] Deleted ${res.deletedCount} expired messages @ ${new Date().toISOString()}`,
-          ),
-        );
-      }
-    } catch (err) {
-      logger.error('[messageExpiry] Error deleting expired messages:', err);
-    }
-  });
-};
+//     try {
+//       const res = await Message.deleteMany({ createdAt: { $lt: threshold } });
+//       if (res.deletedCount) {
+//         logger.info(
+//           colors.green(
+//             `[messageExpiry] Deleted ${res.deletedCount} expired messages @ ${new Date().toISOString()}`,
+//           ),
+//         );
+//       }
+//     } catch (err) {
+//       logger.error('[messageExpiry] Error deleting expired messages:', err);
+//     }
+//   });
+// };
