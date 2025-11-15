@@ -32,8 +32,15 @@ const deleteMessageBySender = async (messageId: string, senderId: string) => {
 // send  message in multiple  chat inbox
 
 const sendMessage = async (payload: any) => {
-  const { senderId, chatIds, message, image, video, contentType } = payload;
-  const media = contentType === 'image' ? image : video;
+  const { senderId, chatIds, message, image, video, thumbnail, contentType } =
+    payload;
+  let media = '';
+
+  if (contentType === 'image') {
+    media = image;
+  } else if (contentType === 'video') {
+    media = video;
+  }
 
   const isUserExist = await User.isExistUserById(senderId);
   if (!isUserExist) {
@@ -50,6 +57,7 @@ const sendMessage = async (payload: any) => {
     chat: chatId,
     sender: senderId,
     message,
+    thumbnail,
     media,
     contentType,
   }));

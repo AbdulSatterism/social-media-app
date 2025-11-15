@@ -12,10 +12,11 @@ router.post(
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   fileUploader({
     image: { fileType: 'images', size: 5 * 1024 * 1024 }, // 5MB
+    thumbnail: { fileType: 'thumbnails', size: 20 * 1024 * 1024 }, // 20MB
     video: { fileType: 'videos', size: 100 * 1024 * 1024 }, // 100MB
   }),
   (req, res) => {
-    const mediaUrl = req.body.image || req.body.video;
+    const mediaUrl = req.body.image || req.body.video || req.body.thumbnail;
     res.status(200).json({ mediaUrl });
   },
 );

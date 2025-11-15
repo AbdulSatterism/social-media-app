@@ -6,5 +6,6 @@ export interface IMessage {
   view?: boolean;
   message?: string;
   media?: string;
+  thumbnail?: string;
   contentType: 'text' | 'image' | 'video';
 }

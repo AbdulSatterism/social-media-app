@@ -14,6 +14,7 @@ import AppError from '../errors/AppError';
 //  File validators with folders
 export const fileValidators = {
   images: { validator: /^image\//, folder: 'images' },
+  thumbnails: { validator: /^image\//, folder: 'thumbnails' },
   videos: { validator: /^video\//, folder: 'videos' },
   audios: { validator: /^audio\//, folder: 'audios' },
   documents: { validator: /(pdf|word|excel|text)/, folder: 'docs' },

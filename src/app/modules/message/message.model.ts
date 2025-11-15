@@ -7,6 +7,7 @@ const messageSchema = new Schema<IMessage>(
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     message: { type: String, default: '' },
     view: { type: Boolean, default: false },
+    thumbnail: { type: String, default: '' },
     media: { type: String, default: '' },
     contentType: {
       type: String,
