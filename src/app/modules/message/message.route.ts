@@ -33,6 +33,7 @@ router.post(
   fileUploader({
     image: { fileType: 'images', size: 50 * 1024 * 1024 }, // 5MB
     video: { fileType: 'videos', size: 1000 * 1024 * 1024 }, // 100MB
+    thumbnail: { fileType: 'thumbnails', size: 20 * 1024 * 1024 },
   }),
   MessageController.sendtMessage,
 );
