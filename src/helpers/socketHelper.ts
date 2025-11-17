@@ -24,10 +24,12 @@ const socket = (io: Server) => {
         sender: string;
         message?: string;
         media?: string; // URL from REST upload
+        thumbnail?: string;
         contentType: 'text' | 'image' | 'video';
       }) => {
         try {
-          const { chat, sender, message, media, contentType } = payload;
+          const { chat, sender, message, media, thumbnail, contentType } =
+            payload;
 
           if (!chat || !sender) throw new Error('chat and sender are required');
           if (!message && !media) throw new Error('Message or media required');
@@ -40,6 +42,7 @@ const socket = (io: Server) => {
             sender,
             message: contentType === 'text' ? message : undefined,
             media: contentType !== 'text' ? media : undefined,
+            thumbnail: thumbnail ? thumbnail : '',
             contentType,
           });
 
