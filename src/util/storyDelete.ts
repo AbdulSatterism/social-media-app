@@ -3,7 +3,8 @@ import cron from 'node-cron';
 import { logger } from '../shared/logger';
 import colors from 'colors';
 import { Story } from '../app/modules/story/story.model';
-import { sendSMS } from './verifyByTwilio';
+import { User } from '../app/modules/user/user.model';
+import { sendPushNotification } from './onesignal';
 
 // Send SMS notifications before deleting stories and messages
 const sendExpiryNotifications = async () => {
@@ -30,8 +31,14 @@ const sendExpiryNotifications = async () => {
 
     for (const phone of storyPhones) {
       try {
+        // find user by phone
+
+        const user = await User.findOne({ phone: phone });
+
         const smsText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
-        await sendSMS(phone, smsText);
+        // await sendSMS(phone, smsText);
+
+        await sendPushNotification(user?.playerId as string[], phone, smsText);
       } catch (err) {
         logger.error('Error sending story SMS to ' + phone, err);
       }
