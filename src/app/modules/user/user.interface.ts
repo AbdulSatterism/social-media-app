@@ -13,6 +13,7 @@ export type IUser = {
   dob?: Date;
   isDeleted?: boolean;
   isFirstLogin?: boolean;
+  playerId?: [string];
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

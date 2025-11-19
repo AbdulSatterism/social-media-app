@@ -70,4 +70,10 @@ router.delete(
 
 router.post('/contact', UserController.contactMatch);
 
+router.post(
+  '/player-id/:id',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  UserController.playerId,
+);
+
 export const UserRoutes = router;

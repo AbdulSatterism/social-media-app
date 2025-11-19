@@ -116,6 +116,18 @@ const contactMatch = catchAsync(async (req, res) => {
   });
 });
 
+const playerId = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const playerId = req.params.id;
+  await UserService.getPlayerId(playerId, userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'player id added',
+    data: null,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -126,4 +138,5 @@ export const UserController = {
   deleteUser,
   deleteUserByAdmin,
   contactMatch,
+  playerId,
 };

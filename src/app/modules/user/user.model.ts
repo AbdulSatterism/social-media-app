@@ -66,6 +66,11 @@ const userSchema = new Schema<IUser, UserModal>(
       default: false,
     },
 
+    playerId: {
+      type: [String],
+      default: [],
+    },
+
     authentication: {
       type: {
         isResetPassword: {

@@ -8,7 +8,7 @@ import { Notification } from '../notifications/notifications.model';
 import { User } from '../user/user.model';
 import { Message } from '../message/message.model';
 import unlinkFile from '../../../shared/unlinkFile';
-import { sendSMS } from '../../../util/verifyByTwilio';
+import { sendPushNotification } from '../../../util/onesignal';
 
 const createPrivateChat = async (creatorId: string, participantId: string) => {
   if (creatorId === participantId) {
@@ -58,7 +58,12 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
 
   // send sms with phone number
   const message = `You’ve got a new message, tap to see it!`;
-  await sendSMS(participant?.phone, message);
+  await sendPushNotification(
+    participant?.playerId as string[],
+    participant?.phone,
+    message,
+  );
+  // await sendSMS(participant?.phone, message);
 
   return chat;
 };

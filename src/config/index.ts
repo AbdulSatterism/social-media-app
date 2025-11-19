@@ -41,4 +41,8 @@ export default {
     twilio_auth_token: process.env.TWILIO_AUTH_TOKEN,
     twilio_phone_number: process.env.TWILIO_PHONE_NUMBER,
   },
+  onesignal: {
+    onesignal_app_id: process.env.ONE_SIGNAL_APP_ID,
+    onesignal_api_key: process.env.ONE_SIGNAL_API_KEY,
+  },
 };

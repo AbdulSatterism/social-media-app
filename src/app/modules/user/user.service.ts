@@ -216,6 +216,23 @@ const contactMatch = async (payload: any) => {
   return { match, unmatch };
 };
 
+const getPlayerId = async (playerId: string, userId: string) => {
+  const isExistUser = await User.findById(userId);
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+
+  // player id is
+
+  const updateUser = await User.findByIdAndUpdate(
+    { _id: userId },
+    { $addToSet: { playerId: playerId } },
+    { new: true },
+  );
+
+  return updateUser;
+};
+
 export const UserService = {
   createUserFromDb,
   getUserProfileFromDB,
@@ -226,4 +243,5 @@ export const UserService = {
   deleteUser,
   deleteUserByAdmin,
   contactMatch,
+  getPlayerId,
 };

@@ -19,6 +19,7 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 const loginUser = catchAsync(async (req, res) => {
   const { ...loginData } = req.body;
+
   const result = await AuthService.loginUserFromDB(loginData);
 
   res.cookie('refreshToken', result.refreshToken, {
