@@ -3,19 +3,25 @@
 import type { Express } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import multer, { FileFilterCallback } from 'multer';
-import colors from 'colors';
-import path from 'path';
-import fs from 'fs/promises';
-import fsSync from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
 import catchAsync from '../../shared/catchAsync';
-import { errorLogger, logger } from '../../shared/logger';
+import { errorLogger } from '../../shared/logger';
 import AppError from '../errors/AppError';
+import config from '../../config';
+import chalk from 'chalk';
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: config.cloudinary.cloud_name,
+  api_key: config.cloudinary.api_key,
+  api_secret: config.cloudinary.api_secret,
+});
 
-//  File validators with folders
+// File validators
 export const fileValidators = {
-  images: { validator: /^image\//, folder: 'images' },
+  images: { validator: /^(image|application\/octet-stream)/, folder: 'images' },
+  videos: { validator: /^(video|application\/octet-stream)/, folder: 'videos' },
   thumbnails: { validator: /^image\//, folder: 'thumbnails' },
-  videos: { validator: /^video\//, folder: 'videos' },
   audios: { validator: /^audio\//, folder: 'audios' },
   documents: { validator: /(pdf|word|excel|text)/, folder: 'docs' },
   any: { validator: /.*/, folder: 'others' },
@@ -35,136 +41,30 @@ interface UploadFields {
 }
 
 /**
- * Ensure upload folder exists
+ * Get folder by MIME type
  */
-const ensureDir = async (dir: string) => {
-  if (!fsSync.existsSync(dir)) {
-    await fs.mkdir(dir, { recursive: true });
-  }
-};
-
-/**
- * Universal file uploader middleware
- */
-const fileUploader = (fields: UploadFields) =>
-  catchAsync(async (req, res, next) => {
-    try {
-      await new Promise<void>((resolve, reject) =>
-        upload(fields)(req, res, err => (err ? reject(err) : resolve())),
-      );
-
-      const files = req.files as { [field: string]: Express.Multer.File[] };
-
-      Object.keys(fields).forEach(field => {
-        if (files?.[field]?.length) {
-          const uploadedFiles = files[field].map(
-            file => `/${getFolderByMime(file.mimetype)}/${file.filename}`, //  Local path with folder
-          );
-
-          req.body[field] =
-            (fields[field]?.maxCount || 1) > 1
-              ? uploadedFiles
-              : uploadedFiles[0];
-        } else {
-          req.body[field] = fields[field].default;
-        }
-      });
-    } catch (error) {
-      errorLogger.error(error);
-
-      Object.keys(fields).forEach(field => {
-        req.body[field] = fields[field].default;
-      });
-    } finally {
-      if (req.body?.data) {
-        Object.assign(req.body, JSON.parse(req.body.data));
-        delete req.body.data;
-      }
-
-      next();
-    }
-  });
-
-export default fileUploader;
-
-/**
- * Universal file retriever (local)
- */
-export const fileRetriever = catchAsync(async (req, res) => {
-  const filename = req.params.filename.replace(/[^\w.-]/g, '');
-  const type = req.params.type || 'others';
-  const filePath = path.join(process.cwd(), 'uploads', type, filename);
-
-  try {
-    await fs.access(filePath); // ✅ Check file exists
-    res.sendFile(filePath);
-  } catch {
-    throw new AppError(StatusCodes.NOT_FOUND, 'File not found');
-  }
-});
-
-/**
- * Delete file from local storage
- */
-export const deleteFile = async (filename: string) => {
-  filename = path.basename(filename);
-  const filePath = path.join(process.cwd(), 'uploads', filename);
-
-  try {
-    await fs.unlink(filePath);
-    logger.info(colors.green(`✔ file '${filename}' deleted successfully!`));
-  } catch (error: any) {
-    errorLogger.error(
-      colors.red(`❌ file '${filename}' not deleted!`),
-      error?.stack ?? error,
-    );
-  }
-};
-
-//  Helper: get folder by MIME type
-
 const getFolderByMime = (mime: string): string => {
-  mime = mime.toLowerCase();
   const matched = Object.values(fileValidators).find(v =>
-    v.validator.test(mime),
+    v.validator.test(mime.toLowerCase()),
   );
   return matched?.folder || 'others';
 };
 
-// Local storage config
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const folder = getFolderByMime(file.mimetype);
-    const dir = path.join(process.cwd(), 'uploads', folder);
+/**
+ * Multer memory storage (temporary before Cloudinary)
+ */
+const storage = multer.memoryStorage();
 
-    try {
-      await ensureDir(dir); // auto-create if missing
-      cb(null, dir);
-    } catch (err) {
-      cb(err as Error, dir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const name = file.originalname
-      .replace(/\..+$/, '')
-      .replace(/[^\w]+/g, '-')
-      .toLowerCase();
-    cb(null, `${name}-${Date.now()}${ext}`);
-  },
-});
-
+/**
+ * File filter
+ */
 const fileFilter =
   (fields: UploadFields) =>
   (_: any, file: Express.Multer.File, cb: FileFilterCallback) => {
-    const fieldType = Object.keys(fields)
-      .find(f => file.fieldname === f)
-      ?.toLowerCase();
+    const fieldType = Object.keys(fields).find(f => file.fieldname === f);
     const fileType = fields[fieldType!]?.fileType;
-
-    const mime = file.mimetype.toLowerCase();
-
-    if (fileValidators[fileType]?.validator.test(mime)) return cb(null, true);
+    if (fileValidators[fileType]?.validator.test(file.mimetype))
+      return cb(null, true);
 
     cb(
       new AppError(
@@ -174,19 +74,89 @@ const fileFilter =
     );
   };
 
+/**
+ * Multer upload
+ */
 const upload = (fields: UploadFields) => {
   const maxSize = Math.max(
     ...Object.values(fields).map(f => f.size || 5 * 1024 * 1024),
   );
-
   return multer({
     storage,
     fileFilter: fileFilter(fields),
-    limits: { fileSize: maxSize }, // ✅ dynamic limit
+    limits: { fileSize: maxSize },
   }).fields(
     Object.keys(fields).map(field => ({
       name: field,
-      maxCount: fields[field].maxCount || undefined,
+      maxCount: fields[field].maxCount || 1,
     })),
   );
 };
+
+/**
+ * Upload file buffer to Cloudinary
+ */
+const uploadToCloudinary = async (
+  file: Express.Multer.File,
+  folder: string,
+) => {
+  return new Promise<string>((resolve, reject) => {
+    try {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder, resource_type: 'auto' },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result?.secure_url ?? '');
+        },
+      );
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    } catch (error) {
+      errorLogger.error(chalk.red('Cloudinary upload error:'), error);
+    }
+  });
+};
+
+/**
+ * Universal file uploader middleware (Cloudinary)
+ */
+const fileUploader = (fields: UploadFields) =>
+  catchAsync(async (req, res, next) => {
+    try {
+      await new Promise<void>((resolve, reject) =>
+        upload(fields)(req, res, err => (err ? reject(err) : resolve())),
+      );
+
+      const files = req.files as { [field: string]: Express.Multer.File[] };
+      for (const field of Object.keys(fields)) {
+        if (files?.[field]?.length) {
+          const uploadedFiles = await Promise.all(
+            files[field].map(file =>
+              uploadToCloudinary(file, getFolderByMime(file.mimetype)),
+            ),
+          );
+
+          // console.log('uploadedFiles:', files);
+
+          req.body[field] =
+            (fields[field]?.maxCount || 1) > 1
+              ? uploadedFiles
+              : uploadedFiles[0];
+        } else {
+          req.body[field] = fields[field].default;
+        }
+      }
+    } catch (error) {
+      errorLogger.error(error);
+      Object.keys(fields).forEach(
+        field => (req.body[field] = fields[field].default),
+      );
+    } finally {
+      if (req.body?.data) {
+        Object.assign(req.body, JSON.parse(req.body.data));
+        delete req.body.data;
+      }
+      next();
+    }
+  });
+
+export default fileUploader;
