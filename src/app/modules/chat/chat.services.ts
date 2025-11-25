@@ -73,6 +73,11 @@ const createGroupChat = async (creatorId: string, members: string[]) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Group members are required');
   }
 
+  const creatorExists = await User.isExistUserById(creatorId);
+  if (!creatorExists) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Creator user not found');
+  }
+
   const uniqueMembers = Array.from(new Set([...members, creatorId])); // Ensure creator is in the group
   const objectIdMembers = uniqueMembers.map(
     id => new mongoose.Types.ObjectId(id),
@@ -80,7 +85,7 @@ const createGroupChat = async (creatorId: string, members: string[]) => {
 
   const chat = await Chat.create({
     type: 'group',
-    name: 'group chat',
+    name: creatorExists.name,
     members: objectIdMembers,
     createdBy: new mongoose.Types.ObjectId(creatorId),
   } as IChat);
