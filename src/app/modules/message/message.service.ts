@@ -32,8 +32,16 @@ const deleteMessageBySender = async (messageId: string, senderId: string) => {
 // send  message in multiple  chat inbox
 
 const sendMessage = async (payload: any) => {
-  const { senderId, chatIds, message, image, video, thumbnail, contentType } =
-    payload;
+  const {
+    senderId,
+    chatIds,
+    message,
+    image,
+    video,
+    thumbnail,
+    contentType,
+    reaction,
+  } = payload;
   let media = '';
 
   if (contentType === 'image') {
@@ -60,6 +68,7 @@ const sendMessage = async (payload: any) => {
     thumbnail,
     media,
     contentType,
+    reaction,
   }));
 
   // 5️⃣ Insert all at once (for multiple chats)
