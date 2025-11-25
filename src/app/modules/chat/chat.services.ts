@@ -483,6 +483,13 @@ const getChatInboxMessages = async (
     .populate('sender', 'name image _id')
     .sort({ createdAt: -1 });
 
+  // update message read status when user fetch the messages
+
+  await Message.updateMany(
+    { chat: chatId, isRead: false },
+    { $set: { isRead: true } },
+  );
+
   // Get total count for pagination
   const total = await Message.countDocuments({ chat: chatId });
   const totalPage = Math.ceil(total / limit);
