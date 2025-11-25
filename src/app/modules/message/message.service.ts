@@ -84,6 +84,7 @@ const updateMessageViewStatus = async (messageId: string) => {
   }
 
   message.view = true;
+
   await message.save();
 
   return message;
