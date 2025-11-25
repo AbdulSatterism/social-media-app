@@ -9,6 +9,7 @@ const messageSchema = new Schema<IMessage>(
     view: { type: Boolean, default: false },
     thumbnail: { type: String, default: '' },
     media: { type: String, default: '' },
+    read: { type: Boolean, default: false },
     contentType: {
       type: String,
       enum: ['text', 'image', 'video'],

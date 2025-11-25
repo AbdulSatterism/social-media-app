@@ -8,4 +8,5 @@ export interface IMessage {
   media?: string;
   thumbnail?: string;
   contentType: 'text' | 'image' | 'video';
+  read?: boolean;
 }

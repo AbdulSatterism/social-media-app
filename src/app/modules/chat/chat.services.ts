@@ -57,7 +57,7 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
   });
 
   // send sms with phone number
-  const message = `You’ve got a new message, tap to see it!`;
+  const message = `${participant?.name} just joined re:`;
   await sendPushNotification(
     participant?.playerId as string[],
     participant?.phone,
