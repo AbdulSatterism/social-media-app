@@ -4,6 +4,7 @@ export interface IMessage {
   chat: Types.ObjectId;
   sender: Types.ObjectId;
   view?: boolean;
+  reaction?: boolean;
   message?: string;
   media?: string;
   thumbnail?: string;

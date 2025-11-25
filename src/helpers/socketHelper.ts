@@ -23,6 +23,7 @@ const socket = (io: Server) => {
         chat: string;
         sender: string;
         message?: string;
+        reaction?: boolean;
         media?: string; // URL from REST upload
         thumbnail?: string;
         contentType: 'text' | 'image' | 'video';
@@ -41,6 +42,7 @@ const socket = (io: Server) => {
             chat,
             sender,
             message: contentType === 'text' ? message : undefined,
+            reaction: payload.reaction || false,
             media: contentType !== 'text' ? media : undefined,
             thumbnail: thumbnail ? thumbnail : '',
             contentType,
