@@ -51,13 +51,13 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
 
   // Create a notification for the participant
   await Notification.create({
-    content: `Mr. ${creator?.name} wants to talk with you`,
+    content: `${creator?.name} just joined re:`,
     senderId: creatorId,
     receiverId: participantId,
   });
 
   // send sms with phone number
-  const message = `${participant?.name} just joined re:`;
+  const message = `${creator?.name} just joined re:`;
   await sendPushNotification(
     participant?.playerId as string[],
     participant?.phone,
