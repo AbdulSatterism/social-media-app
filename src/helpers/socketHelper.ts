@@ -6,6 +6,9 @@ import { logger } from '../shared/logger';
 import { Message } from '../app/modules/message/message.model';
 import AppError from '../app/errors/AppError';
 import { StatusCodes } from 'http-status-codes';
+import { Chat } from '../app/modules/chat/chat.model';
+import { User } from '../app/modules/user/user.model';
+import { sendPushNotification } from '../util/onesignal';
 
 const socket = (io: Server) => {
   io.on('connection', socket => {
@@ -51,6 +54,34 @@ const socket = (io: Server) => {
           const populatedMessage = await Message.findById(
             newMessage._id,
           ).populate('sender', 'name image _id');
+
+          const chatExist = await Chat.findById(chat);
+
+          if (!chatExist)
+            throw new AppError(StatusCodes.BAD_REQUEST, "Chat doesn't exist!");
+
+          // need receiver id from chat sender id not in chat members array
+          const receiverId = chatExist.members.find(
+            memberId => memberId.toString() !== sender,
+          );
+
+          const user = await User.findById(receiverId);
+
+          if (!user)
+            throw new AppError(
+              StatusCodes.BAD_REQUEST,
+              'Receiver user not found',
+            );
+
+          console.log('sender', (populatedMessage?.sender as any)?.name);
+
+          // send sms with phone number
+          const pushMessage = `${(populatedMessage?.sender as any)?.name} sent you a new message`;
+          await sendPushNotification(
+            user?.playerId as string[],
+            user?.phone,
+            pushMessage,
+          );
 
           // Join chat room and emit
           socket.join(chat);
