@@ -40,11 +40,8 @@ const createUserFromDb = async (payload: IUser) => {
   // send sms with phone number
   // const message = `Welcome to re: Your one-time code for verification is ${otp}.`;
 
-  const message = `Welcome to re: Your one-time code for verification is ${otp}.
-
-Use this code to continue.
-
-@re #${otp}`;
+  const message = `Welcome to re: 
+  Your one-time verification code is: ${otp}`;
 
   await sendSMS(payload?.phone, message);
 

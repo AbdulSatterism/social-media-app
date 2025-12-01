@@ -86,11 +86,7 @@ const forgetPasswordToDB = async (phone: string) => {
   //send sms
   // const message = `re: Your one-time code for verification is ${otp}.`;
 
-  const message = `re: Your one-time code for verification is ${otp}.
-
-Use this code to continue.
-
-@re #${otp}`;
+  const message = `re: Your one-time code for verification is: ${otp}`;
 
   await sendSMS(isExistUser?.phone, message);
 
@@ -347,11 +343,7 @@ const resendVerificationEmailToDB = async (phone: string) => {
   //send sms
   // const message = `re: Your one-time code for verification is ${otp}.`;
 
-  const message = `re: Your one-time code for verification is ${otp}.
-
-Use this code to continue.
-
-@re #${otp}`;
+  const message = `re: Your one-time code for verification is ${otp}`;
 
   await sendSMS(existingUser?.phone, message);
 
