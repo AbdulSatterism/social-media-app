@@ -38,7 +38,14 @@ const createUserFromDb = async (payload: IUser) => {
   const otp = generateOTP();
 
   // send sms with phone number
-  const message = `Welcome to re: Your one-time code for verification is ${otp}.`;
+  // const message = `Welcome to re: Your one-time code for verification is ${otp}.`;
+
+  const message = `Welcome to re: Your one-time code for verification is ${otp}.
+
+Use this code to continue.
+
+@re #${otp}`;
+
   await sendSMS(payload?.phone, message);
 
   // create notificaiton for admin

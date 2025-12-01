@@ -84,7 +84,14 @@ const forgetPasswordToDB = async (phone: string) => {
 
   const otp = generateOTP();
   //send sms
-  const message = `re: Your one-time code for verification is ${otp}.`;
+  // const message = `re: Your one-time code for verification is ${otp}.`;
+
+  const message = `re: Your one-time code for verification is ${otp}.
+
+Use this code to continue.
+
+@re #${otp}`;
+
   await sendSMS(isExistUser?.phone, message);
 
   //save to DB
@@ -338,7 +345,14 @@ const resendVerificationEmailToDB = async (phone: string) => {
   // Generate OTP and prepare email
   const otp = generateOTP();
   //send sms
-  const message = `re: Your one-time code for verification is ${otp}.`;
+  // const message = `re: Your one-time code for verification is ${otp}.`;
+
+  const message = `re: Your one-time code for verification is ${otp}.
+
+Use this code to continue.
+
+@re #${otp}`;
+
   await sendSMS(existingUser?.phone, message);
 
   // Update user with authentication details
