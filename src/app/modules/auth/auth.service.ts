@@ -343,7 +343,8 @@ const resendVerificationEmailToDB = async (phone: string) => {
   //send sms
   // const message = `re: Your one-time code for verification is ${otp}.`;
 
-  const message = `${otp} is your one-time code for re: verification`;
+  const message = `re Your one-time code for verification is:${otp}.`;
+  // const message = `${otp} is your one-time code for re: verification`;
 
   await sendSMS(existingUser?.phone, message);
 
