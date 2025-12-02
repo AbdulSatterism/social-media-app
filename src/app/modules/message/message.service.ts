@@ -51,14 +51,11 @@ const sendMessage = async (payload: any) => {
     media = video;
   }
 
-  const isUserExist = await User.isExistUserById(senderId)
-    .select('name image _id')
-    .populate('sender', 'name image _id');
+  const isUserExist = await User.findById(senderId);
+
   if (!isUserExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
-
-  console.log('chatIds', isUserExist);
 
   const chats = await Chat.find({ _id: { $in: chatIds } });
   if (chats.length !== chatIds.length) {
@@ -96,7 +93,7 @@ const sendMessage = async (payload: any) => {
     if (!user) continue; // Skip if user not found
 
     // Send push notification
-    const pushMessage = `${(isUserExist?.sender as any)?.name} sent you a new message`;
+    const pushMessage = `${(isUserExist as any)?.name} sent you a new message`;
     await sendPushNotification(
       user?.playerId as string[],
       user?.phone,
