@@ -58,6 +58,8 @@ const sendMessage = async (payload: any) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
 
+  console.log('chatIds', isUserExist);
+
   const chats = await Chat.find({ _id: { $in: chatIds } });
   if (chats.length !== chatIds.length) {
     throw new AppError(StatusCodes.NOT_FOUND, 'One or more chat(s) not found');
