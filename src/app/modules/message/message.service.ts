@@ -4,6 +4,7 @@ import AppError from '../../errors/AppError';
 import { Message } from './message.model';
 import { User } from '../user/user.model';
 import { Chat } from '../chat/chat.model';
+import { sendPushNotification } from '../../../util/onesignal';
 
 const deleteMessageBySender = async (messageId: string, senderId: string) => {
   const isUserExist = await User.isExistUserById(senderId);
@@ -50,7 +51,10 @@ const sendMessage = async (payload: any) => {
     media = video;
   }
 
-  const isUserExist = await User.isExistUserById(senderId);
+  const isUserExist = await User.isExistUserById(senderId).populate(
+    'sender',
+    'name image _id',
+  );
   if (!isUserExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
@@ -73,6 +77,32 @@ const sendMessage = async (payload: any) => {
 
   // 5️⃣ Insert all at once (for multiple chats)
   const result = await Message.insertMany(newMessages);
+  // Send push notifications to all chat participants
+  for (const chatId of chatIds) {
+    const chatExist = await Chat.findById(chatId);
+
+    if (!chatExist) continue; // Skip if chat doesn't exist
+
+    // Get receiver id (exclude sender from chat members)
+    const receiverId = chatExist.members.find(
+      memberId => memberId.toString() !== senderId,
+    );
+
+    if (!receiverId) continue; // Skip if no receiver found
+
+    const user = await User.findById(receiverId);
+
+    if (!user) continue; // Skip if user not found
+
+    // Send push notification
+    const pushMessage = `${(isUserExist?.sender as any)?.name} sent you a new message`;
+    await sendPushNotification(
+      user?.playerId as string[],
+      user?.phone,
+      pushMessage,
+    );
+  }
+
   return result;
 };
 

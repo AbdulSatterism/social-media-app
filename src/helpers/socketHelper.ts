@@ -73,8 +73,6 @@ const socket = (io: Server) => {
               'Receiver user not found',
             );
 
-          console.log('sender', (populatedMessage?.sender as any)?.name);
-
           // send sms with phone number
           const pushMessage = `${(populatedMessage?.sender as any)?.name} sent you a new message`;
           await sendPushNotification(
