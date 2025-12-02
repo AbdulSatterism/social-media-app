@@ -51,10 +51,9 @@ const sendMessage = async (payload: any) => {
     media = video;
   }
 
-  const isUserExist = await User.isExistUserById(senderId).populate(
-    'sender',
-    'name image _id',
-  );
+  const isUserExist = await User.isExistUserById(senderId)
+    .select('name image _id')
+    .populate('sender', 'name image _id');
   if (!isUserExist) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
