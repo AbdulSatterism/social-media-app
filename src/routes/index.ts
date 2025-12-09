@@ -10,6 +10,7 @@ import { StoryRoutes } from '../app/modules/story/story.route';
 import { ChatRoutes } from '../app/modules/chat/chat.route';
 import { MessageRoutes } from '../app/modules/message/message.route';
 import { ReportRoutes } from '../app/modules/report/report.route';
+import { ComplainRoutes } from '../app/modules/complain/complain.route';
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ const apiRoutes = [
   { path: '/story', route: StoryRoutes },
   { path: '/chat', route: ChatRoutes },
   { path: '/report', route: ReportRoutes },
+  { path: '/complain', route: ComplainRoutes },
   { path: '/message', route: MessageRoutes },
 ];
 

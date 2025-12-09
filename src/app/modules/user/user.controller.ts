@@ -128,6 +128,17 @@ const playerId = catchAsync(async (req, res) => {
   });
 });
 
+const blockUser = catchAsync(async (req, res) => {
+  const userId = req.params.id;
+  const result = await UserService.blockUser(userId);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User blocked successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUser,
   getUserProfile,
@@ -139,4 +150,5 @@ export const UserController = {
   deleteUserByAdmin,
   contactMatch,
   playerId,
+  blockUser,
 };

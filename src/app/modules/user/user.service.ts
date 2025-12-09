@@ -167,17 +167,6 @@ const searchUser = async (searchTerm: string, userId: string) => {
   return result;
 };
 
-const deleteUser = async (id: string) => {
-  const isExistUser = await User.findById(id);
-  if (!isExistUser) {
-    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
-  }
-  const result = await User.findByIdAndDelete(id);
-  return result;
-};
-
-// delete user by admin
-
 const deleteUserByAdmin = async (adminId: string, userId: string) => {
   const [isExistAdmin, isExistUser] = await Promise.all([
     User.findById(adminId),
@@ -237,6 +226,30 @@ const getPlayerId = async (playerId: string, userId: string) => {
   return updateUser;
 };
 
+const deleteUser = async (id: string) => {
+  const isExistUser = await User.findById(id);
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+  const result = await User.findByIdAndDelete(id);
+  return result;
+};
+
+const blockUser = async (id: string) => {
+  const isExistUser = await User.findById(id);
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+
+  const result = await User.findByIdAndUpdate(
+    id,
+    { isBlocked: true },
+    { new: true },
+  );
+
+  return result;
+};
+
 export const UserService = {
   createUserFromDb,
   getUserProfileFromDB,
@@ -248,4 +261,5 @@ export const UserService = {
   deleteUserByAdmin,
   contactMatch,
   getPlayerId,
+  blockUser,
 };

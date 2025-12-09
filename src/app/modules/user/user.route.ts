@@ -76,4 +76,10 @@ router.post(
   UserController.playerId,
 );
 
+router.post(
+  '/block/:id',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  UserController.blockUser,
+);
+
 export const UserRoutes = router;

@@ -12,6 +12,7 @@ export type IUser = {
   image?: string;
   dob?: Date;
   isDeleted?: boolean;
+  isBlocked?: boolean;
   isFirstLogin?: boolean;
   playerId?: [string];
   authentication?: {
