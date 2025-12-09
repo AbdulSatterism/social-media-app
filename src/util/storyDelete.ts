@@ -1,69 +1,92 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import cron from 'node-cron';
-import { logger } from '../shared/logger';
 import colors from 'colors';
+import { logger } from '../shared/logger';
 import { Story } from '../app/modules/story/story.model';
 import { User } from '../app/modules/user/user.model';
+import { Message } from '../app/modules/message/message.model';
 import { sendPushNotification } from './onesignal';
 
-// Send SMS notifications before deleting stories and messages
-const sendExpiryNotifications = async () => {
+const HOURS_IN_MS = 60 * 60 * 1000;
+const EXPIRY_THRESHOLD_HOURS = 24;
+const NOTIFICATION_WINDOW_START = 2;
+const NOTIFICATION_WINDOW_END = 3;
+const HOURLY_CRON = '0 * * * *';
+
+/**
+ * Sends push notifications to users whose content will expire in 2-3 hours
+ */
+const sendExpiryNotifications = async (): Promise<void> => {
   const now = Date.now();
-  const twoHoursFromNow = new Date(now + 2 * 60 * 60 * 1000); // 2 hours from now
-  const threeHoursFromNow = new Date(now + 3 * 60 * 60 * 1000); // 3 hours from now
+  const twoHoursFromNow = new Date(
+    now + NOTIFICATION_WINDOW_START * HOURS_IN_MS,
+  );
+  const threeHoursFromNow = new Date(
+    now + NOTIFICATION_WINDOW_END * HOURS_IN_MS,
+  );
 
   try {
-    // Find stories that will expire in 2-3 hours
-    const expiringStories = await Story.find({
-      createdAt: {
-        $gte: threeHoursFromNow,
-        $lt: twoHoursFromNow,
-      },
-    }).populate('author');
+    const timeWindow = {
+      $lte: threeHoursFromNow,
+      $gt: twoHoursFromNow,
+    };
 
-    // Send notifications for stories (unique phones only)
-    const storyPhones = new Set<string>();
-    expiringStories.forEach(story => {
-      const author = story.author as any;
-      const phone = (author?.phone as string | undefined)?.trim();
-      if (phone) storyPhones.add(phone);
+    // Find content that will expire soon
+    const [expiringStories, expiringMessages] = await Promise.all([
+      Story.find({ createdAt: timeWindow }).populate('author'),
+      Message.find({ createdAt: timeWindow }).populate('sender'),
+    ]);
+
+    // Collect unique phone numbers from expiring content
+    const userPhones = new Set<string>();
+
+    expiringMessages.forEach(message => {
+      const phone = (message.sender as any)?.phone?.trim();
+      if (phone) userPhones.add(phone);
     });
 
-    for (const phone of storyPhones) {
-      try {
-        // find user by phone
+    expiringStories.forEach(story => {
+      const phone = (story.author as any)?.phone?.trim();
+      if (phone) userPhones.add(phone);
+    });
 
-        const user = await User.findOne({ phone: phone });
+    if (userPhones.size === 0) return;
 
-        const smsText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
-        // await sendSMS(phone, smsText);
+    // Get all player IDs for affected users
+    const users = await User.find({ phone: { $in: Array.from(userPhones) } });
+    const playerIds = users
+      .flatMap(user => user.playerId || [])
+      .filter((id): id is string => !!id);
 
-        await sendPushNotification(user?.playerId as string[], phone, smsText);
-      } catch (err) {
-        logger.error('Error sending story SMS to ' + phone, err);
-      }
+    // Send bulk notification
+    if (playerIds.length > 0) {
+      const notificationText = `Your re: disappears in 2 hours, save to your photo gallery before it's gone!`;
+      await sendPushNotification(playerIds, 'all', notificationText);
+      logger.info(
+        `[expiryNotification] Sent notification to ${playerIds.length} devices`,
+      );
     }
   } catch (err) {
     logger.error('[expiryNotification] Error sending notifications:', err);
   }
 };
 
-// Schedule the job to run every hour
-cron.schedule('0 * * * *', sendExpiryNotifications);
-
-export const storyDeleteJob = () => {
-  // Every hour
-  cron.schedule('0 * * * *', async () => {
-    const now = Date.now();
-    const threshold = new Date(now - 48 * 60 * 60 * 1000); // 24h ago
+/**
+ * Deletes stories older than 24 hours
+ */
+export const storyDeleteJob = (): void => {
+  cron.schedule(HOURLY_CRON, async () => {
+    const threshold = new Date(
+      Date.now() - EXPIRY_THRESHOLD_HOURS * HOURS_IN_MS,
+    );
 
     try {
-      // For most apps, a single deleteMany is fine:
-      const res = await Story.deleteMany({ createdAt: { $lt: threshold } });
-      if (res.deletedCount) {
+      const result = await Story.deleteMany({ createdAt: { $lt: threshold } });
+
+      if (result.deletedCount) {
         logger.info(
           colors.green(
-            `[storyExpiry] Deleted ${res.deletedCount} expired stories @ ${new Date().toISOString()}`,
+            `[storyExpiry] Deleted ${result.deletedCount} expired stories @ ${new Date().toISOString()}`,
           ),
         );
       }
@@ -73,25 +96,43 @@ export const storyDeleteJob = () => {
   });
 };
 
-// Message delete job
+/**
+ * Deletes messages older than 24 hours
+ */
+export const messageDeleteJob = (): void => {
+  cron.schedule(HOURLY_CRON, async () => {
+    const threshold = new Date(
+      Date.now() - EXPIRY_THRESHOLD_HOURS * HOURS_IN_MS,
+    );
 
-// export const messageDeleteJob = () => {
-//   // Every hour
-//   cron.schedule('0 * * * *', async () => {
-//     const now = Date.now();
-//     const threshold = new Date(now - 48 * 60 * 60 * 1000); // 24h ago
+    try {
+      const result = await Message.deleteMany({
+        createdAt: { $lt: threshold },
+      });
 
-//     try {
-//       const res = await Message.deleteMany({ createdAt: { $lt: threshold } });
-//       if (res.deletedCount) {
-//         logger.info(
-//           colors.green(
-//             `[messageExpiry] Deleted ${res.deletedCount} expired messages @ ${new Date().toISOString()}`,
-//           ),
-//         );
-//       }
-//     } catch (err) {
-//       logger.error('[messageExpiry] Error deleting expired messages:', err);
-//     }
-//   });
-// };
+      if (result.deletedCount) {
+        logger.info(
+          colors.green(
+            `[messageExpiry] Deleted ${result.deletedCount} expired messages @ ${new Date().toISOString()}`,
+          ),
+        );
+      }
+    } catch (err) {
+      logger.error('[messageExpiry] Error deleting expired messages:', err);
+    }
+  });
+};
+
+/**
+ * Initializes all scheduled jobs
+ * Call this once when your server starts
+ */
+export const initializeScheduledJobs = (): void => {
+  storyDeleteJob();
+  messageDeleteJob();
+
+  // Schedule notification job
+  cron.schedule(HOURLY_CRON, sendExpiryNotifications);
+
+  logger.info('[scheduledJobs] All cron jobs initialized');
+};
