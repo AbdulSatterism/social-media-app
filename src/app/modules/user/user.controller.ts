@@ -35,7 +35,9 @@ const getAllUser = catchAsync(async (req, res) => {
 });
 
 const usersWithoutPagination = catchAsync(async (req, res) => {
-  const result = await UserService.usersWithoutPagination();
+  const result = await UserService.usersWithoutPagination(
+    req.query.search as string,
+  );
 
   sendResponse(res, {
     success: true,

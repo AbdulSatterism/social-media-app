@@ -89,8 +89,24 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   };
 };
 
-const usersWithoutPagination = async () => {
-  const result = await User.find().sort({ createdAt: -1 }).lean();
+const usersWithoutPagination = async (search: string) => {
+  // if search term is provided search by name  or email or phone
+
+  let result;
+
+  if (search) {
+    result = await User.find({
+      $or: [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+  } else {
+    result = await User.find().sort({ createdAt: -1 }).lean();
+  }
 
   return result;
 };
