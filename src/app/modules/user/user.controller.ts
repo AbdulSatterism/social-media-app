@@ -34,6 +34,17 @@ const getAllUser = catchAsync(async (req, res) => {
   });
 });
 
+const usersWithoutPagination = catchAsync(async (req, res) => {
+  const result = await UserService.usersWithoutPagination();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'all user retrieved successfully',
+    data: result,
+  });
+});
+
 const getUserProfile = catchAsync(async (req, res) => {
   const user = req.user;
   const result = await UserService.getUserProfileFromDB(user);
@@ -151,4 +162,5 @@ export const UserController = {
   contactMatch,
   playerId,
   blockUser,
+  usersWithoutPagination,
 };

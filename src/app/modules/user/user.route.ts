@@ -21,6 +21,12 @@ router.get(
   UserController.getAllUser,
 );
 
+router.get(
+  '/',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  UserController.usersWithoutPagination,
+);
+
 router.patch(
   '/update-profile',
   fileUploader({ image: { fileType: 'images', size: 5 * 1024 * 1024 } }),

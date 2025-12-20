@@ -89,6 +89,12 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   };
 };
 
+const usersWithoutPagination = async () => {
+  const result = await User.find().sort({ createdAt: -1 }).lean();
+
+  return result;
+};
+
 const getUserProfileFromDB = async (
   user: JwtPayload,
 ): Promise<Partial<IUser>> => {
@@ -262,4 +268,5 @@ export const UserService = {
   contactMatch,
   getPlayerId,
   blockUser,
+  usersWithoutPagination,
 };
