@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { StoryService } from './story.services';
+import { Cache } from '../../../lib/cashe';
 
 const createStory = catchAsync(async (req, res) => {
   const userId = req.user.id;
@@ -10,6 +11,8 @@ const createStory = catchAsync(async (req, res) => {
     ...req.body,
     contentType: req.body.video ? 'video' : 'image',
   });
+
+  await Cache.delByPattern('stories:*');
 
   sendResponse(res, {
     success: true,
@@ -72,6 +75,8 @@ const deleteStory = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const storyId = req.params.id;
   const result = await StoryService.deleteStory(userId, storyId);
+
+  await Cache.delByPattern('stories:*');
 
   sendResponse(res, {
     success: true,

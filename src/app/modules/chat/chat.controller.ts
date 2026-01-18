@@ -2,11 +2,15 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { ChatService } from './chat.services';
+import { Cache } from '../../../lib/cashe';
 
 const createPrivateChat = catchAsync(async (req, res) => {
   const { member } = req.body;
   const creatorId = req?.user?.id;
   const result = await ChatService.createPrivateChat(creatorId, member);
+
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -20,6 +24,9 @@ const createGroupChat = catchAsync(async (req, res) => {
 
   const creatorId = req?.user?.id;
   const result = await ChatService.createGroupChat(creatorId, members);
+
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -37,6 +44,9 @@ const addMembersToGroupChat = catchAsync(async (req, res) => {
     adderId,
     membersArray,
   );
+
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -54,6 +64,8 @@ const removeMemberFromGroupChatByCreator = catchAsync(async (req, res) => {
     memberId,
   );
 
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -66,6 +78,8 @@ const leaveGroupChat = catchAsync(async (req, res) => {
   const { groupId } = req.body;
   const memberId = req?.user?.id;
   const result = await ChatService.leaveGroupChat(groupId, memberId);
+
+  await Cache.delByPattern('chats:*');
 
   sendResponse(res, {
     success: true,
@@ -121,6 +135,8 @@ const updateGroup = catchAsync(async (req, res) => {
     req.body,
   );
 
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -168,6 +184,9 @@ const deleteGroupChat = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const chatId = req.params.chatId;
   const result = await ChatService.deleteGroupChat(userId, chatId);
+
+  await Cache.delByPattern('chats:*');
+
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

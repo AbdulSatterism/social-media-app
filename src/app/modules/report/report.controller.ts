@@ -2,9 +2,12 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { ReportService } from './report.service';
+import { Cache } from '../../../lib/cashe';
 
 const createReport = catchAsync(async (req, res) => {
   const result = await ReportService.createReport(req.body);
+
+  await Cache.delByPattern('reports:*');
 
   sendResponse(res, {
     success: true,
@@ -46,6 +49,8 @@ const getReportById = catchAsync(async (req, res) => {
 
 const deleteReport = catchAsync(async (req, res) => {
   const result = await ReportService.deleteReport(req.params.id);
+
+  await Cache.delByPattern('reports:*');
 
   sendResponse(res, {
     success: true,

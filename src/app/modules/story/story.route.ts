@@ -8,6 +8,7 @@ import { StoryController } from './story.controller';
 import fileUploader from '../../middlewares/fileUploader';
 import validateRequest from '../../middlewares/validateRequest';
 import { StoryValidation } from './story.validation';
+import { cacheGet } from '../../middlewares/casheGet';
 
 const router = Router();
 
@@ -31,18 +32,21 @@ router.post(
 router.get(
   '/all-stories',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  cacheGet('stories:all', 3600, req => ({ q: req.query })),
   StoryController.allStories,
 );
 
 router.get(
   '/my-stories',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  cacheGet('stories:my-stories', 3600, req => ({ q: req.query })),
   StoryController.myAllStories,
 );
 
 router.get(
   '/:id',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
+  cacheGet('stories:by-id', 3600, req => ({ params: req.params })),
   StoryController.getStoryById,
 );
 

@@ -7,6 +7,7 @@ import { UserController } from './user.controller';
 import { UserValidation } from './user.validation';
 import validateRequest from '../../middlewares/validateRequest';
 import fileUploader from '../../middlewares/fileUploader';
+import { cacheGet } from '../../middlewares/casheGet';
 const router = express.Router();
 
 router.post(
@@ -18,12 +19,14 @@ router.post(
 router.get(
   '/all-user',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  cacheGet('users:all', 3600, req => ({ q: req.query })),
   UserController.getAllUser,
 );
 
 router.get(
   '/',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  cacheGet('users:no-pagination', 3600, req => ({ q: req.query })),
   UserController.usersWithoutPagination,
 );
 
@@ -38,14 +41,14 @@ router.patch(
 router.get(
   '/user',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  cacheGet('users:user', 3600, req => ({ q: req.query })),
   UserController.getUserProfile,
 );
-
-// router.get('/get-all-users', auth(USER_ROLES.ADMIN), UserController.getAllUser);
 
 router.get(
   '/get-single-user/:id',
   auth(USER_ROLES.ADMIN),
+  cacheGet('users:single', 3600, req => ({ params: req.params })),
   UserController.getSingleUser,
 );
 
@@ -53,12 +56,14 @@ router.get(
 router.get(
   '/user-search',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  cacheGet('users:search', 3600, req => ({ q: req.query })),
   UserController.searchUser,
 );
 
 router.get(
   '/profile',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  cacheGet('users:profile', 3600, req => ({ q: req.query })),
   UserController.getUserProfile,
 );
 
@@ -74,7 +79,11 @@ router.delete(
   UserController.deleteUserByAdmin,
 );
 
-router.post('/contact', UserController.contactMatch);
+router.post(
+  '/contact',
+  cacheGet('users:contact', 3600, req => ({ q: req.query })),
+  UserController.contactMatch,
+);
 
 router.post(
   '/player-id/:id',
