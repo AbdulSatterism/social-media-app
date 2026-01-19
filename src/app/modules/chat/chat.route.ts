@@ -3,7 +3,6 @@ import { ChatController } from './chat.controller';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
 import fileUploader from '../../middlewares/fileUploader';
-import { cacheGet } from '../../middlewares/casheGet';
 
 const router = Router();
 
@@ -40,13 +39,13 @@ router.post(
 router.get(
   '/private-chat-list',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('chats:private-list', 3600, req => ({ q: req.query })),
+  // cacheGet('chats:private-list', 3600, req => ({ q: req.query })),
   ChatController.chatListWithLastMessage,
 );
 router.get(
   '/group-chat-list',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('chats:group-list', 3600, req => ({ q: req.query })),
+  // cacheGet('chats:group-list', 3600, req => ({ q: req.query })),
   ChatController.chatListWithGroupLastMessage,
 );
 
@@ -60,14 +59,14 @@ router.patch(
 router.get(
   '/group-chat/:chatId',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('chats:group-details', 3600, req => ({ params: req.params })),
+  // cacheGet('chats:group-details', 3600, req => ({ params: req.params })),
   ChatController.getGroupChatDetails,
 );
 
 router.get(
   '/chat-inbox/:chatId',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('chats:inbox-messages', 3600, req => ({ q: req.query })),
+  // cacheGet('chats:inbox-messages', 3600, req => ({ q: req.query })),
   ChatController.getChatInboxMessages,
 );
 
