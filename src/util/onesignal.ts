@@ -21,6 +21,8 @@ export const sendPushNotification = async (
     const notification = {
       contents: { en: message },
       include_player_ids: playerId,
+      ios_badgeType: 'Increase',
+      ios_badgeCount: 1,
     };
 
     await client.createNotification(notification);
