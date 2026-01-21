@@ -2,7 +2,6 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { NotificationService } from './notifications.service';
-import { Cache } from '../../../lib/cashe';
 
 const getMyAllNotifications = catchAsync(async (req, res) => {
   const userId = req?.user?.id;
@@ -11,7 +10,7 @@ const getMyAllNotifications = catchAsync(async (req, res) => {
     req.query,
   );
 
-  await Cache.delByPattern('notifications:*');
+  // await Cache.delByPattern('notifications:*');
 
   sendResponse(res, {
     success: true,
@@ -32,7 +31,7 @@ const deleteNotification = catchAsync(async (req, res) => {
   const userId = req?.user?.id;
   const result = await NotificationService.deleteNotification(id, userId);
 
-  await Cache.delByPattern('notifications:*');
+  // await Cache.delByPattern('notifications:*');
 
   sendResponse(res, {
     success: true,
@@ -75,7 +74,7 @@ const deleteNotificationByAdmin = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await NotificationService.deleteNotificationByAdmin(id);
 
-  await Cache.delByPattern('notifications:*');
+  // await Cache.delByPattern('notifications:*');
 
   sendResponse(res, {
     success: true,
