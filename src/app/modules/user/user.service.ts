@@ -89,26 +89,44 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   };
 };
 
-const usersWithoutPagination = async (search: string) => {
-  // if search term is provided search by name  or email or phone
+const usersWithoutPagination = async (query: Record<string, unknown>) => {
+  const search = query.search as string | undefined;
+  const { page, limit } = query;
+  const pages = parseInt(page as string) || 1;
+  const size = parseInt(limit as string) || 25;
+  const skip = (pages - 1) * size;
 
-  let result;
+  // if search term is provided search by name or email or phone
+  const searchQuery = search
+    ? {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } },
+        ],
+      }
+    : {};
 
-  if (search) {
-    result = await User.find({
-      $or: [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { phone: { $regex: search, $options: 'i' } },
-      ],
-    })
+  const [result, total] = await Promise.all([
+    User.find(searchQuery)
       .sort({ createdAt: -1 })
-      .lean();
-  } else {
-    result = await User.find().sort({ createdAt: -1 }).lean();
-  }
+      .skip(skip)
+      .limit(size)
+      .lean(),
+    User.countDocuments(searchQuery),
+  ]);
 
-  return result;
+  const totalPage = Math.ceil(total / size);
+
+  return {
+    data: result,
+    meta: {
+      page: pages,
+      limit: size,
+      totalPage,
+      total,
+    },
+  };
 };
 
 const getUserProfileFromDB = async (

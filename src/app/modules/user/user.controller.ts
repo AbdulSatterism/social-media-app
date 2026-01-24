@@ -37,15 +37,19 @@ const getAllUser = catchAsync(async (req, res) => {
 });
 
 const usersWithoutPagination = catchAsync(async (req, res) => {
-  const result = await UserService.usersWithoutPagination(
-    req.query.search as string,
-  );
+  const result = await UserService.usersWithoutPagination(req.query);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'all user retrieved successfully',
-    data: result,
+    meta: {
+      page: Number(result.meta.page),
+      limit: Number(result.meta.limit),
+      totalPage: result.meta.totalPage,
+      total: result.meta.total,
+    },
+    data: result.data,
   });
 });
 
