@@ -51,9 +51,9 @@ const socket = (io: Server) => {
             contentType,
           });
 
-          const populatedMessage = await Message.findById(
-            newMessage._id,
-          ).populate('sender', 'name image _id');
+          const populatedMessage = await Message.findById(newMessage._id)
+            .populate('sender', 'name image _id')
+            .populate('chat', 'type name');
 
           const chatExist = await Chat.findById(chat);
 
@@ -74,7 +74,12 @@ const socket = (io: Server) => {
             );
 
           // send sms with phone number
-          const pushMessage = `${(populatedMessage?.sender as any)?.name} sent you a new message`;
+          const senderName =
+            (populatedMessage?.chat as any)?.type === 'group'
+              ? (populatedMessage?.chat as any)?.name
+              : (populatedMessage?.sender as any)?.name;
+
+          const pushMessage = `${senderName} sent you a new message`;
           await sendPushNotification(
             user?.playerId as string[],
             user?.phone,

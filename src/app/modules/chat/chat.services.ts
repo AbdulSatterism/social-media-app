@@ -50,19 +50,19 @@ const createPrivateChat = async (creatorId: string, participantId: string) => {
   } as IChat);
 
   // Create a notification for the participant
-  await Notification.create({
-    content: `${creator?.name} just joined re:`,
-    senderId: creatorId,
-    receiverId: participantId,
-  });
+  // await Notification.create({
+  //   content: `${creator?.name} just joined re:`,
+  //   senderId: creatorId,
+  //   receiverId: participantId,
+  // });
 
   // send sms with phone number
-  const message = `${creator?.name} just joined re:`;
-  await sendPushNotification(
-    participant?.playerId as string[],
-    participant?.phone,
-    message,
-  );
+  // const message = `${creator?.name} just joined re:`;
+  // await sendPushNotification(
+  //   participant?.playerId as string[],
+  //   participant?.phone,
+  //   message,
+  // );
   // await sendSMS(participant?.phone, message);
 
   return chat;
@@ -103,7 +103,22 @@ const createGroupChat = async (creatorId: string, members: string[]) => {
       ),
   );
 
-  return chat;
+  // find all members  and send push notification all members playerid except creator
+
+  const participants = await User.find({
+    _id: { $in: uniqueMembers.filter(id => id !== creatorId) },
+  });
+
+  for (const participant of participants) {
+    const message = `You have been added to a new group chat.`;
+    await sendPushNotification(
+      participant?.playerId as string[],
+      participant?.phone,
+      message,
+    );
+
+    return chat;
+  }
 };
 
 // add new member to group chat at a time one or more members can added by creator
@@ -159,6 +174,20 @@ const addMembersToGroupChat = async (
       }),
     ),
   );
+
+  // send push notification to new members except adder
+  const participants = await User.find({
+    _id: { $in: uniqueNewMembers.filter(id => id !== adderId) },
+  });
+
+  for (const participant of participants) {
+    const message = `You have been added to a group chat.`;
+    await sendPushNotification(
+      participant?.playerId as string[],
+      participant?.phone,
+      message,
+    );
+  }
 
   return chat;
 };
