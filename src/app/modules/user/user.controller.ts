@@ -2,7 +2,6 @@ import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { UserService } from './user.service';
-import { Cache } from '../../../lib/cashe';
 
 const createUser = catchAsync(async (req, res) => {
   const value = {
@@ -11,7 +10,7 @@ const createUser = catchAsync(async (req, res) => {
 
   await UserService.createUserFromDb(value);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,
@@ -68,7 +67,7 @@ const updateProfile = catchAsync(async (req, res) => {
 
   const result = await UserService.updateProfileToDB(user, req.body);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,
@@ -106,7 +105,7 @@ const searchUser = catchAsync(async (req, res) => {
 const deleteUser = catchAsync(async (req, res) => {
   const result = await UserService.deleteUser(req.user.id);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,
@@ -120,7 +119,7 @@ const deleteUserByAdmin = catchAsync(async (req, res) => {
   const { userId } = req.params;
   await UserService.deleteUserByAdmin(req.user.id, userId);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,
@@ -145,7 +144,7 @@ const playerId = catchAsync(async (req, res) => {
   const playerId = req.params.id;
   await UserService.getPlayerId(playerId, userId);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,
@@ -159,7 +158,7 @@ const blockUser = catchAsync(async (req, res) => {
   const userId = req.params.id;
   const result = await UserService.blockUser(userId);
 
-  await Cache.delByPattern('users:*');
+  // await Cache.delByPattern('users:*');
 
   sendResponse(res, {
     success: true,

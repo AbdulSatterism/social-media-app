@@ -18,12 +18,17 @@ router.post(
 router.get(
   '/all-report',
   auth(USER_ROLES.ADMIN),
-  cacheGet('reports:all', 3600, req => ({ q: req.query })),
+  cacheGet('reports:all', 120, req => ({ q: req.query })),
   ReportController.getAllReport,
 );
 
-router.get('/:id', auth(USER_ROLES.ADMIN),  cacheGet('reports:by-id', 3600, req => ({ params: req.params })), ReportController.getReportById);
+router.get(
+  '/:id',
+  auth(USER_ROLES.ADMIN),
+  cacheGet('reports:by-id', 120, req => ({ params: req.params })),
+  ReportController.getReportById,
+);
 
-router.delete('/:id', auth(USER_ROLES.ADMIN),  ReportController.deleteReport);
+router.delete('/:id', auth(USER_ROLES.ADMIN), ReportController.deleteReport);
 
 export const ReportRoutes = router;

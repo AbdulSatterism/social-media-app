@@ -26,7 +26,7 @@ function normalizeQuery(query: Request['query']) {
 }
 
 export const cacheGet =
-  (prefix: string, ttlSeconds = 3600, keySelector?: (req: Request) => object) =>
+  (prefix: string, ttlSeconds = 120, keySelector?: (req: Request) => object) =>
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Only cache GET
     if (req.method !== 'GET') return next();

@@ -18,11 +18,11 @@ router.post(
   fileUploader({
     image: {
       fileType: 'images',
-      size: 5 * 1024 * 1024, // 5MB
+      size: 50 * 1024 * 1024, // 50MB
     },
     video: {
       fileType: 'videos',
-      size: 50 * 1024 * 1024, // 50MB
+      size: 1000 * 1024 * 1024, // 1000MB
     },
   }),
   validateRequest(StoryValidation.createStoryValidationSchema),
@@ -32,21 +32,21 @@ router.post(
 router.get(
   '/all-stories',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('stories:all', 3600, req => ({ q: req.query })),
+  cacheGet('stories:all', 120, req => ({ q: req.query })),
   StoryController.allStories,
 );
 
 router.get(
   '/my-stories',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('stories:my-stories', 3600, req => ({ q: req.query })),
+  cacheGet('stories:my-stories', 120, req => ({ q: req.query })),
   StoryController.myAllStories,
 );
 
 router.get(
   '/:id',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  cacheGet('stories:by-id', 3600, req => ({ params: req.params })),
+  cacheGet('stories:by-id', 120, req => ({ params: req.params })),
   StoryController.getStoryById,
 );
 
