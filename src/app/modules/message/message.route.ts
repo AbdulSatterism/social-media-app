@@ -11,9 +11,25 @@ router.post(
   '/upload',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   fileUploader({
-    image: { fileType: 'images', size: 50 * 1024 * 1024 }, // 50MB
-    thumbnail: { fileType: 'thumbnails', size: 200 * 1024 * 1024 }, // 200MB
-    video: { fileType: 'videos', size: 1000 * 1024 * 1024 }, // 1000MB
+    image: {
+      fileType: 'images',
+      size: 50 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    }, // 50MB
+    thumbnail: {
+      fileType: 'thumbnails',
+      size: 200 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    }, // 200MB
+    video: {
+      fileType: 'videos',
+      size: 1000 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'playback',
+      hdrMode: 'pq',
+    }, // 1000MB
   }),
   (req, res) => {
     const mediaUrl = req.body.image || req.body.video || req.body.thumbnail;
@@ -31,9 +47,25 @@ router.post(
   '/send-message',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   fileUploader({
-    image: { fileType: 'images', size: 50 * 1024 * 1024 }, // 50MB
-    video: { fileType: 'videos', size: 1000 * 1024 * 1024 }, // 1000MB
-    thumbnail: { fileType: 'thumbnails', size: 200 * 1024 * 1024 },
+    image: {
+      fileType: 'images',
+      size: 50 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    }, // 50MB
+    video: {
+      fileType: 'videos',
+      size: 1000 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'playback',
+      hdrMode: 'pq',
+    }, // 1000MB
+    thumbnail: {
+      fileType: 'thumbnails',
+      size: 200 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    }, // 200MB
   }),
   MessageController.sendtMessage,
 );

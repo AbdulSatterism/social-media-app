@@ -51,7 +51,14 @@ router.get(
 
 router.patch(
   '/update-group/:chatId',
-  fileUploader({ image: { fileType: 'images', size: 10 * 1024 * 1024 } }),
+  fileUploader({
+    image: {
+      fileType: 'images',
+      size: 10 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    },
+  }),
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   ChatController.updateGroup,
 );

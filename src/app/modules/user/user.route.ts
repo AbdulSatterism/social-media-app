@@ -32,7 +32,14 @@ router.get(
 
 router.patch(
   '/update-profile',
-  fileUploader({ image: { fileType: 'images', size: 50 * 1024 * 1024 } }),
+  fileUploader({
+    image: {
+      fileType: 'images',
+      size: 50 * 1024 * 1024,
+      returnType: 'url',
+      delivery: 'original',
+    },
+  }),
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
   validateRequest(UserValidation.updateUserProfileSchema),
   UserController.updateProfile,
