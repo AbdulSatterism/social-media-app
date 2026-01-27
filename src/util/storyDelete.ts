@@ -20,30 +20,15 @@ const sendExpiryNotifications = async (): Promise<void> => {
   const notifyBefore = new Date(now - EXPIRY_NOTIFY_AFTER_HOURS * HOURS_IN_MS);
 
   try {
-    const [expiringMessages, expiringStories] = await Promise.all([
-      Message.find({
-        createdAt: { $lte: notifyBefore },
-        expiryNotificationSent: { $ne: true },
-      }).populate({
-        path: 'sender',
-        select: 'phone',
-      }),
-
-      Story.find({
-        createdAt: { $lte: notifyBefore },
-        expiryNotificationSent: { $ne: true },
-      }).populate({
-        path: 'author',
-        select: 'phone',
-      }),
-    ]);
+    const expiringStories = await Story.find({
+      createdAt: { $lte: notifyBefore },
+      expiryNotificationSent: { $ne: true },
+    }).populate({
+      path: 'author',
+      select: 'phone',
+    });
 
     const phones = new Set<string>();
-
-    expiringMessages.forEach(msg => {
-      const phone = (msg.sender as any)?.phone?.trim();
-      if (phone) phones.add(phone);
-    });
 
     expiringStories.forEach(story => {
       const phone = (story.author as any)?.phone?.trim();
@@ -65,9 +50,15 @@ const sendExpiryNotifications = async (): Promise<void> => {
     if (!playerIds.length) return;
 
     const notificationText =
-      "Your re: disappears in 1 hour, save to your photo gallery before it's gone!";
+      'Your Story expires soon, check to see which friends sent a re:';
 
     await sendPushNotification(playerIds, 'all', notificationText);
+
+    // Mark stories as notified so they won't be notified again
+    await Story.updateMany(
+      { _id: { $in: expiringStories.map(s => s._id) } },
+      { expiryNotificationSent: true },
+    );
 
     logger.info(`expire notification Sent to ${playerIds.length} devices`);
   } catch (error) {
