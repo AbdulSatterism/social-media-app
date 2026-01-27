@@ -5,4 +5,5 @@ export interface IStory {
   image?: string;
   contentType: 'image' | 'video';
   author: Types.ObjectId;
+  expiryNotificationSent?: boolean;
 }
