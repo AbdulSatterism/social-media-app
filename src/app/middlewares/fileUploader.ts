@@ -18,6 +18,7 @@ cloudinary.config({
 
 type CloudinaryResourceType = 'image' | 'video' | 'raw';
 
+// File validators
 export const fileValidators = {
   images: { validator: /^image\//, folder: 'images' },
   videos: { validator: /^video\//, folder: 'videos' },
@@ -31,29 +32,36 @@ export const fileTypes = Object.keys(
   fileValidators,
 ) as (keyof typeof fileValidators)[];
 
+/**
+ * UploadedAsset - Full metadata returned for 'object' returnType
+ */
 export interface UploadedAsset {
-  secureUrl: string; // original, non-transformed URL
-  publicId: string; // for building delivery URLs
+  secureUrl: string;
+  publicId: string;
   resourceType: CloudinaryResourceType;
   format?: string | null;
   bytes?: number | null;
   width?: number | null;
   height?: number | null;
-  duration?: number | null; // for video/audio
+  duration?: number | null;
 }
 
+/**
+ * UploadFields - Configuration for each upload field
+ */
 export interface UploadFields {
   [field: string]: {
     default?: string | string[] | UploadedAsset | UploadedAsset[] | null;
-    maxCount?: number; // default 1
+    maxCount?: number;
     size?: number; // bytes
     fileType: (typeof fileTypes)[number];
-    returnType?: 'object' | 'url';
-    delivery?: 'original' | 'playback';
-    hdrMode?: 'pq' | 'hlg' | 'none';
+    returnType?: 'object' | 'url'; // 'object' = full metadata, 'url' = just URL string
+    delivery?: 'original' | 'playback'; // 'playback' applies transformations for video
+    hdrMode?: 'pq' | 'hlg' | 'none'; // HDR tone mapping mode
   };
 }
 
+// Determine resource type by MIME type
 const getResourceTypeByMime = (mime: string): CloudinaryResourceType => {
   const m = (mime || '').toLowerCase();
   if (m.startsWith('image/')) return 'image';
@@ -62,7 +70,7 @@ const getResourceTypeByMime = (mime: string): CloudinaryResourceType => {
   return 'raw';
 };
 
-// Fallback: folder by MIME if field->fileType mapping is missing
+// Get folder by MIME type (fallback)
 const getFolderByMime = (mime: string): string => {
   const matched = Object.values(fileValidators).find(v =>
     v.validator.test((mime || '').toLowerCase()),
@@ -70,55 +78,45 @@ const getFolderByMime = (mime: string): string => {
   return matched?.folder || 'others';
 };
 
-// Build a browser-safe SDR/sRGB playback URL from a publicId.
-export function buildVideoPlaybackUrl(
+/**
+ * Build video playback URL with tone mapping and color correction
+ */
+const buildVideoPlaybackUrl = (
   publicId: string,
   hdr: 'none' | 'hlg' | 'pq' = 'pq',
-) {
-  const transformation: any[] = [];
-  if (hdr === 'hlg') transformation.push({ effect: 'tone_map:hlg' });
-  if (hdr === 'pq') transformation.push({ effect: 'tone_map:pq' });
+): string => {
+  const transformations: any[] = [];
 
-  transformation.push(
-    { color_space: 'srgb' }, // normalize gamut
-    { fetch_format: 'mp4' }, // mp4 container
-    { video_codec: 'h264' }, // wide browser support
+  // Apply tone mapping based on HDR mode
+  if (hdr === 'hlg') {
+    transformations.push({ e_tone_map: 'hlg' });
+  } else if (hdr === 'pq') {
+    transformations.push({ e_tone_map: 'pq' });
+  } else if (hdr === 'none') {
+    transformations.push({ e_tone_map: 'auto' });
+  }
+
+  // Add color space normalization and format conversion
+  transformations.push(
+    { cs_srgb: true }, // sRGB color space
+    { f_mp4: true }, // MP4 format
+    { vc_h264: true }, // H.264 codec
+    { q_auto: true }, // Auto quality
   );
 
-  return cloudinary.url(publicId, {
+  const url = cloudinary.url(publicId, {
     resource_type: 'video',
     type: 'upload',
-    transformation,
+    transformation: transformations,
     secure: true,
   });
-}
 
-// Derive SDR/sRGB playback URL from a stored secureUrl (no publicId).
-export function toPlaybackUrlFromSecure(
-  secureUrl: string,
-  hdr: 'none' | 'hlg' | 'pq' = 'pq',
-) {
-  try {
-    const u = new URL(secureUrl);
-    const parts = u.pathname.split('/upload/');
-    if (parts.length !== 2) return secureUrl;
-
-    const tone =
-      hdr === 'hlg' ? 'e_tone_map:hlg/' : hdr === 'pq' ? 'e_tone_map:pq/' : '';
-    const inject = `${tone}e_color_space:srgb/f_mp4,vc_h264/`;
-
-    u.pathname = `${parts[0]}/upload/${inject}${parts[1]}`.replace(
-      /\.(mov|hevc|heif|webm|mkv)$/i,
-      '.mp4',
-    );
-    return u.toString();
-  } catch {
-    return secureUrl;
-  }
-}
+  return url;
+};
 
 const storage = multer.memoryStorage();
 
+// File filter for multer
 const fileFilter =
   (fields: UploadFields) =>
   (_: any, file: Express.Multer.File, cb: FileFilterCallback) => {
@@ -137,9 +135,10 @@ const fileFilter =
     );
   };
 
+// Multer upload instance
 const upload = (fields: UploadFields) => {
   const maxSize = Math.max(
-    ...Object.values(fields).map(f => f.size || 5 * 1024 * 1024),
+    ...Object.values(fields).map(f => f.size || 50 * 1024 * 1024),
   );
 
   return multer({
@@ -154,13 +153,15 @@ const upload = (fields: UploadFields) => {
   );
 };
 
-export interface UploadedInternal extends UploadedAsset {}
-
+/**
+ * Upload file to Cloudinary
+ * Returns full metadata object (UploadedAsset)
+ */
 const uploadToCloudinary = async (
   file: Express.Multer.File,
   folder: string,
-): Promise<UploadedInternal> => {
-  return new Promise<UploadedInternal>((resolve, reject) => {
+): Promise<UploadedAsset> => {
+  return new Promise<UploadedAsset>((resolve, reject) => {
     try {
       const resource_type = getResourceTypeByMime(file.mimetype);
 
@@ -168,12 +169,15 @@ const uploadToCloudinary = async (
         {
           folder,
           resource_type,
-          use_filename: true, // keep base name
-          unique_filename: true, // avoid collisions
-          overwrite: false, // never overwrite existing
+          use_filename: true,
+          unique_filename: true,
+          overwrite: false,
         },
         (error, result) => {
-          if (error) return reject(error);
+          if (error) {
+            errorLogger.error(chalk.red('Cloudinary upload error:'), error);
+            return reject(error);
+          }
 
           resolve({
             secureUrl: result?.secure_url ?? '',
@@ -191,12 +195,13 @@ const uploadToCloudinary = async (
 
       streamifier.createReadStream(file.buffer).pipe(stream);
     } catch (error) {
-      errorLogger.error(chalk.red('Cloudinary upload error:'), error);
+      errorLogger.error(chalk.red('Cloudinary upload exception:'), error);
       reject(error);
     }
   });
 };
 
+// Main file uploader middleware
 const fileUploader = (fields: UploadFields) =>
   catchAsync(async (req, res, next) => {
     try {
@@ -209,39 +214,40 @@ const fileUploader = (fields: UploadFields) =>
 
       for (const field of Object.keys(fields)) {
         if (files?.[field]?.length) {
-          // Choose folder from declared fileType; fallback to MIME if missing
           const targetFolder =
             fileValidators[fields[field].fileType]?.folder ??
             getFolderByMime(files[field][0].mimetype);
 
+          // Upload all files for this field
           const uploaded = await Promise.all(
             files[field].map(file => uploadToCloudinary(file, targetFolder)),
           );
 
+          // Determine if client wants array or single value
           const wantsArray = (fields[field]?.maxCount || 1) > 1;
+
+          // Get configuration
           const returnType = fields[field]?.returnType ?? 'object';
           const delivery = fields[field]?.delivery ?? 'original';
           const hdrMode = fields[field]?.hdrMode ?? 'pq';
+          const isVideoField = fields[field].fileType === 'videos';
 
           let value: any;
 
           if (returnType === 'url') {
-            // URL-only return
-            if (
-              fields[field].fileType === 'videos' &&
-              delivery === 'playback'
-            ) {
-              // Return a color-safe playback URL (SDR/sRGB) instead of the original
-              const mapOne = (u: UploadedInternal) =>
+            // Return URL strings
+            if (isVideoField && delivery === 'playback') {
+              // Return browser-safe playback URL with tone mapping
+              const mapOne = (u: UploadedAsset) =>
                 buildVideoPlaybackUrl(u.publicId, hdrMode);
               value = wantsArray ? uploaded.map(mapOne) : mapOne(uploaded[0]);
             } else {
-              // Return original URL
-              const mapOne = (u: UploadedInternal) => u.secureUrl;
+              // Return original secure URL
+              const mapOne = (u: UploadedAsset) => u.secureUrl;
               value = wantsArray ? uploaded.map(mapOne) : mapOne(uploaded[0]);
             }
           } else {
-            // object return (full metadata)
+            // Return full object with metadata
             value = wantsArray ? uploaded : uploaded[0];
           }
 
@@ -268,9 +274,9 @@ const fileUploader = (fields: UploadFields) =>
 
 export default fileUploader;
 
-// ------------------------------
-// Cloudinary configuration
-// ------------------------------
+// // ------------------------------
+// // Cloudinary configuration
+// // ------------------------------
 
 // // Cloudinary config
 // cloudinary.config({
