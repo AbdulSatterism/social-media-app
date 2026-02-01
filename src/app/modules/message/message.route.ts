@@ -47,16 +47,19 @@ router.post(
       fileType: 'images',
       size: 50 * 1024 * 1024,
       returnType: 'url',
+      delivery: 'original',
     }, // 50MB
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024,
       returnType: 'url',
+      delivery: 'hdr',
     }, // 1000MB
     thumbnail: {
       fileType: 'thumbnails',
       size: 200 * 1024 * 1024,
       returnType: 'url',
+      delivery: 'original',
     }, // 200MB
   }),
   MessageController.sendtMessage,
