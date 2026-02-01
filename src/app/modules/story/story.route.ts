@@ -27,7 +27,6 @@ router.post(
       size: 1000 * 1024 * 1024, // 1000MB
       returnType: 'url',
       delivery: 'playback',
-      hdrMode: 'pq',
     },
   }),
   validateRequest(StoryValidation.createStoryValidationSchema),

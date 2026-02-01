@@ -28,7 +28,6 @@ router.post(
       size: 1000 * 1024 * 1024,
       returnType: 'url',
       delivery: 'playback',
-      hdrMode: 'pq',
     }, // 1000MB
   }),
   (req, res) => {
@@ -58,7 +57,6 @@ router.post(
       size: 1000 * 1024 * 1024,
       returnType: 'url',
       delivery: 'playback',
-      hdrMode: 'pq',
     }, // 1000MB
     thumbnail: {
       fileType: 'thumbnails',
