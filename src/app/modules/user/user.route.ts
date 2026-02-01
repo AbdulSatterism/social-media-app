@@ -37,7 +37,6 @@ router.patch(
       fileType: 'images',
       size: 50 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'original',
     },
   }),
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),

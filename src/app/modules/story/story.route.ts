@@ -20,13 +20,11 @@ router.post(
       fileType: 'images',
       size: 50 * 1024 * 1024, // 50MB
       returnType: 'url',
-      delivery: 'original',
     },
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024, // 1000MB
       returnType: 'url',
-      delivery: 'playback',
     },
   }),
   validateRequest(StoryValidation.createStoryValidationSchema),

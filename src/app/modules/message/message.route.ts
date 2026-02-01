@@ -15,19 +15,16 @@ router.post(
       fileType: 'images',
       size: 50 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'original',
     }, // 50MB
     thumbnail: {
       fileType: 'thumbnails',
       size: 200 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'original',
     }, // 200MB
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'playback',
     }, // 1000MB
   }),
   (req, res) => {
@@ -50,19 +47,16 @@ router.post(
       fileType: 'images',
       size: 50 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'original',
     }, // 50MB
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'playback',
     }, // 1000MB
     thumbnail: {
       fileType: 'thumbnails',
       size: 200 * 1024 * 1024,
       returnType: 'url',
-      delivery: 'original',
     }, // 200MB
   }),
   MessageController.sendtMessage,
