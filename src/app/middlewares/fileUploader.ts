@@ -21,8 +21,8 @@ cloudinary.config({
 type CloudinaryResourceType = 'image' | 'video' | 'raw';
 
 export interface UploadedAsset {
-  secureUrl: string; // Original
-  playbackUrl?: string; // MP4 safe
+  secureUrl: string;
+  playbackUrl?: string; 
   publicId: string;
   resourceType: CloudinaryResourceType;
   format?: string | null;
@@ -72,6 +72,7 @@ const buildMp4PlaybackUrl = (publicId: string) => {
   });
 };
 
+
 const uploadToCloudinary = async (
   file: Express.Multer.File,
   folder: string,
@@ -92,7 +93,7 @@ const uploadToCloudinary = async (
       if (isVideo) {
         options.format = 'mp4';
         options.video_codec = 'h264';
-        options.audio_codec = 'aac'; 
+        options.audio_codec = 'aac';
         options.quality = 'auto:best';
       }
 
@@ -102,8 +103,10 @@ const uploadToCloudinary = async (
           if (error || !result) return reject(error);
 
           resolve({
-            secureUrl: result.secure_url, // ✅ CLEAN URL like images
-            playbackUrl: undefined,
+            secureUrl: result.secure_url,
+            playbackUrl: isVideo
+              ? buildMp4PlaybackUrl(result.public_id)
+              : undefined,
             publicId: result.public_id,
             resourceType,
             format: result.format,
@@ -117,6 +120,7 @@ const uploadToCloudinary = async (
     }
   });
 };
+
 
 const fileFilter =
   (fields: UploadFields) =>
@@ -133,7 +137,15 @@ const fileFilter =
 
 const fileUploader = (fields: UploadFields) =>
   catchAsync(async (req, res, next) => {
-    const upload = multer({ storage, fileFilter: fileFilter(fields) }).fields(
+    const maxSize = Math.max(
+      ...Object.values(fields).map(f => f.size || 50 * 1024 * 1024),
+    );
+
+    const upload = multer({
+      storage,
+      fileFilter: fileFilter(fields),
+      limits: { fileSize: maxSize },
+    }).fields(
       Object.entries(fields).map(([name, cfg]) => ({
         name,
         maxCount: cfg.maxCount || 1,
@@ -149,8 +161,11 @@ const fileUploader = (fields: UploadFields) =>
         const files = (req.files as any)?.[field] || [];
         if (!files.length) continue;
 
+        const folder =
+          fileValidators[fields[field].fileType]?.folder || 'others';
+
         const uploaded = await Promise.all(
-          files.map((f: Express.Multer.File) => uploadToCloudinary(f, field)),
+          files.map((f: Express.Multer.File) => uploadToCloudinary(f, folder)),
         );
 
         const wantsArray = (fields[field].maxCount || 1) > 1;
@@ -161,7 +176,7 @@ const fileUploader = (fields: UploadFields) =>
         const mapFn = (u: UploadedAsset) => {
           if (returnType === 'url') {
             if (isVideo && delivery === 'playback') {
-              return u.playbackUrl || buildMp4PlaybackUrl(u.publicId);
+              return u.playbackUrl || u.secureUrl;
             }
             return u.secureUrl;
           }
@@ -171,8 +186,15 @@ const fileUploader = (fields: UploadFields) =>
         const finalValue = wantsArray
           ? uploaded.map(mapFn)
           : mapFn(uploaded[0]);
+
         req.body.uploadedFiles[field] = finalValue;
         req.body[field] = finalValue;
+      }
+
+      // ✅ Parse JSON multipart `data`
+      if (req.body?.data && typeof req.body.data === 'string') {
+        Object.assign(req.body, JSON.parse(req.body.data));
+        delete req.body.data;
       }
 
       next();

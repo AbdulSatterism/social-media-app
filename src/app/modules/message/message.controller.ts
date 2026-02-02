@@ -20,7 +20,7 @@ const deleteMessageBySender = catchAsync(async (req, res) => {
   });
 });
 
-const sendtMessage = catchAsync(async (req, res) => {
+const sendMessage = catchAsync(async (req, res) => {
   const result = await MessageService.sendMessage(req.body);
 
   sendResponse(res, {
@@ -46,6 +46,6 @@ const updateMessageViewStatus = catchAsync(async (req, res) => {
 
 export const MessageController = {
   deleteMessageBySender,
-  sendtMessage,
+  sendMessage,
   updateMessageViewStatus,
 };

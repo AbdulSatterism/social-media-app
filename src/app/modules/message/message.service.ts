@@ -62,7 +62,6 @@ const sendMessage = async (payload: any) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'One or more chat(s) not found');
   }
 
-  // 4️⃣ Create message objects for each chat
   const newMessages = chatIds.map((chatId: string) => ({
     chat: chatId,
     sender: senderId,
@@ -73,26 +72,21 @@ const sendMessage = async (payload: any) => {
     reaction,
   }));
 
-  // 5️⃣ Insert all at once (for multiple chats)
   const result = await Message.insertMany(newMessages);
-  // Send push notifications to all chat participants
+
   for (const chatId of chatIds) {
     const chatExist = await Chat.findById(chatId);
 
-    if (!chatExist) continue; // Skip if chat doesn't exist
-
-    // Get receiver id (exclude sender from chat members)
+    if (!chatExist) continue;
     const receiverId = chatExist.members.find(
       memberId => memberId.toString() !== senderId,
     );
 
-    if (!receiverId) continue; // Skip if no receiver found
+    if (!receiverId) continue;
 
     const user = await User.findById(receiverId);
 
-    if (!user) continue; // Skip if user not found
-
-    // Send push notification
+    if (!user) continue;
     const pushMessage = `${(isUserExist as any)?.name} sent you a new message`;
     await sendPushNotification(
       user?.playerId as string[],
@@ -104,7 +98,6 @@ const sendMessage = async (payload: any) => {
   return result;
 };
 
-// update message view status
 const updateMessageViewStatus = async (messageId: string) => {
   const message = await Message.findById(messageId);
   if (!message) {

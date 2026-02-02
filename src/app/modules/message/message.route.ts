@@ -65,7 +65,7 @@ router.post(
       delivery: 'original',
     }, // 200MB
   }),
-  MessageController.sendtMessage,
+  MessageController.sendMessage,
 );
 
 router.patch(
