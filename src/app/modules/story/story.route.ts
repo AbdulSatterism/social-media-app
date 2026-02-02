@@ -26,7 +26,7 @@ router.post(
       fileType: 'videos',
       size: 1000 * 1024 * 1024, // 1000MB
       returnType: 'url',
-      delivery: 'hdr',
+      delivery: 'playback',
     },
   }),
   validateRequest(StoryValidation.createStoryValidationSchema),

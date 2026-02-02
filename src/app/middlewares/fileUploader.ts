@@ -21,27 +21,24 @@ cloudinary.config({
 type CloudinaryResourceType = 'image' | 'video' | 'raw';
 
 export interface UploadedAsset {
-  secureUrl: string; // Original master
-  playbackUrl?: string; // SDR fallback
+  secureUrl: string; // Original
+  playbackUrl?: string; // MP4 safe
   publicId: string;
   resourceType: CloudinaryResourceType;
   format?: string | null;
-  bytes?: number | null;
-  width?: number | null;
-  height?: number | null;
-  duration?: number | null;
 }
 
-export interface UploadFields {
-  [field: string]: {
-    default?: string | string[] | UploadedAsset | UploadedAsset[] | null;
-    maxCount?: number;
-    size?: number;
-    fileType: keyof typeof fileValidators;
-    returnType?: 'object' | 'url';
-    delivery?: 'original' | 'hdr' | 'sdr';
-  };
+export interface UploadField {
+  fileType: 'images' | 'videos' | 'thumbnails' | 'audios' | 'documents' | 'any';
+  maxCount?: number;
+  size?: number;
+  returnType?: 'url' | 'object';
+  delivery?: 'original' | 'playback';
 }
+
+export type UploadFields = Record<string, UploadField>;
+
+const storage = multer.memoryStorage();
 
 export const fileValidators = {
   images: { validator: /^image\//, folder: 'images' },
@@ -52,80 +49,28 @@ export const fileValidators = {
   any: { validator: /.*/, folder: 'others' },
 };
 
-/* -------------------- Helpers -------------------- */
-
-const getResourceTypeByMime = (mime: string): CloudinaryResourceType => {
+const getResourceType = (mime: string): CloudinaryResourceType => {
   const m = (mime || '').toLowerCase();
   if (m.startsWith('image/')) return 'image';
   if (m.startsWith('video/')) return 'video';
   return 'raw';
 };
 
-const getFolderByMime = (mime: string) => {
-  const matched = Object.values(fileValidators).find(v =>
-    v.validator.test((mime || '').toLowerCase()),
-  );
-  return matched?.folder || 'others';
-};
-
-const buildSDRPlaybackUrl = (publicId: string) => {
+const buildMp4PlaybackUrl = (publicId: string) => {
   return cloudinary.url(publicId, {
     resource_type: 'video',
     secure: true,
+    format: 'mp4',
     transformation: [
       {
-        format: 'mp4',
         video_codec: 'h264',
         audio_codec: 'aac',
-        quality: 'auto',
-        color_space: 'srgb',
-        color_primaries: 'bt709',
-        transfer_function: 'bt709',
+        quality: 'auto:best',
+        flags: 'progressive',
       },
     ],
   });
 };
-
-/* -------------------- Multer -------------------- */
-
-const storage = multer.memoryStorage();
-
-const fileFilter =
-  (fields: UploadFields) =>
-  (_: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const fieldType = Object.keys(fields).find(f => file.fieldname === f);
-    const fileType = fieldType ? fields[fieldType]?.fileType : undefined;
-
-    if (fileType && fileValidators[fileType]?.validator.test(file.mimetype)) {
-      return cb(null, true);
-    }
-
-    cb(
-      new AppError(
-        StatusCodes.BAD_REQUEST,
-        `${file.originalname} is not a valid ${fileType ?? 'requested'} file`,
-      ),
-    );
-  };
-
-const upload = (fields: UploadFields) => {
-  const maxSize = Math.max(
-    ...Object.values(fields).map(f => f.size || 50 * 1024 * 1024),
-  );
-
-  return multer({
-    storage,
-    fileFilter: fileFilter(fields),
-    limits: { fileSize: maxSize },
-  }).fields(
-    Object.keys(fields).map(field => ({
-      name: field,
-      maxCount: fields[field].maxCount || 1,
-    })),
-  );
-};
-
-/* -------------------- Cloudinary Upload -------------------- */
 
 const uploadToCloudinary = async (
   file: Express.Multer.File,
@@ -133,10 +78,10 @@ const uploadToCloudinary = async (
 ): Promise<UploadedAsset> => {
   return new Promise((resolve, reject) => {
     try {
-      const resourceType = getResourceTypeByMime(file.mimetype);
+      const resourceType = getResourceType(file.mimetype);
       const isVideo = resourceType === 'video';
 
-      const uploadOptions: any = {
+      const options: any = {
         folder,
         resource_type: resourceType,
         use_filename: true,
@@ -144,122 +89,340 @@ const uploadToCloudinary = async (
         overwrite: false,
       };
 
-      // Convert video to MP4 but KEEP ORIGINAL COLOR
       if (isVideo) {
-        uploadOptions.format = 'mp4';
-
-        // Optional eager SDR fallback
-        uploadOptions.eager = [
-          {
-            format: 'mp4',
-            video_codec: 'h264',
-            audio_codec: 'aac',
-            quality: 'auto',
-          },
-        ];
-
-        uploadOptions.eager_async = false;
+        options.format = 'mp4';
+        options.video_codec = 'h264';
+        options.audio_codec = 'aac'; 
+        options.quality = 'auto:best';
       }
 
       const stream = cloudinary.uploader.upload_stream(
-        uploadOptions,
+        options,
         (error, result) => {
-          if (error) {
-            errorLogger.error(chalk.red('Cloudinary upload error:'), error);
-            return reject(error);
-          }
-
-          const originalUrl = result?.secure_url ?? '';
-
-          let playbackUrl: string | undefined;
-          if (isVideo && result?.eager?.length) {
-            playbackUrl = result.eager[0].secure_url;
-          }
+          if (error || !result) return reject(error);
 
           resolve({
-            secureUrl: originalUrl,
-            playbackUrl,
-            publicId: result?.public_id ?? '',
-            resourceType:
-              (result?.resource_type as CloudinaryResourceType) ?? 'raw',
-            format: result?.format ?? null,
-            bytes: result?.bytes ?? null,
-            width: (result as any)?.width ?? null,
-            height: (result as any)?.height ?? null,
-            duration: (result as any)?.duration ?? null,
+            secureUrl: result.secure_url, // ✅ CLEAN URL like images
+            playbackUrl: undefined,
+            publicId: result.public_id,
+            resourceType,
+            format: result.format,
           });
         },
       );
 
       streamifier.createReadStream(file.buffer).pipe(stream);
-    } catch (error) {
-      reject(error);
+    } catch (err) {
+      reject(err);
     }
   });
 };
 
-/* -------------------- MAIN MIDDLEWARE -------------------- */
+const fileFilter =
+  (fields: UploadFields) =>
+  (_: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const fieldConfig = fields[file.fieldname];
+    const rule = fileValidators[fieldConfig?.fileType || 'any'];
+
+    if (!rule.validator.test(file.mimetype)) {
+      return cb(new Error(`Invalid file type: ${file.mimetype}`));
+    }
+
+    cb(null, true);
+  };
 
 const fileUploader = (fields: UploadFields) =>
   catchAsync(async (req, res, next) => {
-    await new Promise<void>((resolve, reject) =>
-      upload(fields)(req, res, err => (err ? reject(err) : resolve())),
+    const upload = multer({ storage, fileFilter: fileFilter(fields) }).fields(
+      Object.entries(fields).map(([name, cfg]) => ({
+        name,
+        maxCount: cfg.maxCount || 1,
+      })),
     );
 
-    const files = req.files as { [field: string]: Express.Multer.File[] };
+    upload(req, res, async err => {
+      if (err) return next(err);
 
-    for (const field of Object.keys(fields)) {
-      if (files?.[field]?.length) {
-        const targetFolder =
-          fileValidators[fields[field].fileType]?.folder ??
-          getFolderByMime(files[field][0].mimetype);
+      req.body.uploadedFiles = {};
+
+      for (const field in fields) {
+        const files = (req.files as any)?.[field] || [];
+        if (!files.length) continue;
 
         const uploaded = await Promise.all(
-          files[field].map(file => uploadToCloudinary(file, targetFolder)),
+          files.map((f: Express.Multer.File) => uploadToCloudinary(f, field)),
         );
 
-        const wantsArray = (fields[field]?.maxCount || 1) > 1;
-        const returnType = fields[field]?.returnType ?? 'object';
-        const delivery = fields[field]?.delivery ?? 'original';
-        const isVideoField = fields[field].fileType === 'videos';
+        const wantsArray = (fields[field].maxCount || 1) > 1;
+        const returnType = fields[field].returnType || 'object';
+        const delivery = fields[field].delivery || 'original';
+        const isVideo = fields[field].fileType === 'videos';
 
-        const mapOne = (u: UploadedAsset) => {
-          // Always preserve original if requested
-          if (delivery === 'original' || delivery === 'hdr') {
+        const mapFn = (u: UploadedAsset) => {
+          if (returnType === 'url') {
+            if (isVideo && delivery === 'playback') {
+              return u.playbackUrl || buildMp4PlaybackUrl(u.publicId);
+            }
             return u.secureUrl;
           }
-
-          // SDR playback only if requested
-          if (delivery === 'sdr' && isVideoField) {
-            return u.playbackUrl || buildSDRPlaybackUrl(u.publicId);
-          }
-
-          return u.secureUrl;
+          return u;
         };
 
-        let value: any;
-
-        if (returnType === 'url') {
-          value = wantsArray ? uploaded.map(mapOne) : mapOne(uploaded[0]);
-        } else {
-          value = wantsArray ? uploaded : uploaded[0];
-        }
-
-        req.body[field] = value;
-      } else {
-        req.body[field] = fields[field].default;
+        const finalValue = wantsArray
+          ? uploaded.map(mapFn)
+          : mapFn(uploaded[0]);
+        req.body.uploadedFiles[field] = finalValue;
+        req.body[field] = finalValue;
       }
-    }
 
-    if (req.body?.data) {
-      Object.assign(req.body, JSON.parse(req.body.data));
-      delete req.body.data;
-    }
-
-    next();
+      next();
+    });
   });
 
 export default fileUploader;
+
+// type CloudinaryResourceType = 'image' | 'video' | 'raw';
+
+// export interface UploadedAsset {
+//   secureUrl: string; // Original master
+//   playbackUrl?: string; // SDR fallback
+//   publicId: string;
+//   resourceType: CloudinaryResourceType;
+//   format?: string | null;
+//   bytes?: number | null;
+//   width?: number | null;
+//   height?: number | null;
+//   duration?: number | null;
+// }
+
+// export interface UploadFields {
+//   [field: string]: {
+//     default?: string | string[] | UploadedAsset | UploadedAsset[] | null;
+//     maxCount?: number;
+//     size?: number;
+//     fileType: keyof typeof fileValidators;
+//     returnType?: 'object' | 'url';
+//     delivery?: 'original' | 'hdr' | 'sdr';
+//   };
+// }
+
+// export const fileValidators = {
+//   images: { validator: /^image\//, folder: 'images' },
+//   videos: { validator: /^video\//, folder: 'videos' },
+//   audios: { validator: /^audio\//, folder: 'audios' },
+//   thumbnails: { validator: /^image\//, folder: 'thumbnails' },
+//   documents: { validator: /(pdf|word|excel|text)/, folder: 'docs' },
+//   any: { validator: /.*/, folder: 'others' },
+// };
+
+// /* -------------------- Helpers -------------------- */
+
+// const getResourceTypeByMime = (mime: string): CloudinaryResourceType => {
+//   const m = (mime || '').toLowerCase();
+//   if (m.startsWith('image/')) return 'image';
+//   if (m.startsWith('video/')) return 'video';
+//   return 'raw';
+// };
+
+// const getFolderByMime = (mime: string) => {
+//   const matched = Object.values(fileValidators).find(v =>
+//     v.validator.test((mime || '').toLowerCase()),
+//   );
+//   return matched?.folder || 'others';
+// };
+
+// const buildSDRPlaybackUrl = (publicId: string) => {
+//   return cloudinary.url(publicId, {
+//     resource_type: 'video',
+//     secure: true,
+//     transformation: [
+//       {
+//         format: 'mp4',
+//         video_codec: 'h264',
+//         audio_codec: 'aac',
+//         quality: 'auto',
+//         color_space: 'srgb',
+//         color_primaries: 'bt709',
+//         transfer_function: 'bt709',
+//       },
+//     ],
+//   });
+// };
+
+// /* -------------------- Multer -------------------- */
+
+// const storage = multer.memoryStorage();
+
+// const fileFilter =
+//   (fields: UploadFields) =>
+//   (_: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+//     const fieldType = Object.keys(fields).find(f => file.fieldname === f);
+//     const fileType = fieldType ? fields[fieldType]?.fileType : undefined;
+
+//     if (fileType && fileValidators[fileType]?.validator.test(file.mimetype)) {
+//       return cb(null, true);
+//     }
+
+//     cb(
+//       new AppError(
+//         StatusCodes.BAD_REQUEST,
+//         `${file.originalname} is not a valid ${fileType ?? 'requested'} file`,
+//       ),
+//     );
+//   };
+
+// const upload = (fields: UploadFields) => {
+//   const maxSize = Math.max(
+//     ...Object.values(fields).map(f => f.size || 50 * 1024 * 1024),
+//   );
+
+//   return multer({
+//     storage,
+//     fileFilter: fileFilter(fields),
+//     limits: { fileSize: maxSize },
+//   }).fields(
+//     Object.keys(fields).map(field => ({
+//       name: field,
+//       maxCount: fields[field].maxCount || 1,
+//     })),
+//   );
+// };
+
+// /* -------------------- Cloudinary Upload -------------------- */
+
+// const uploadToCloudinary = async (
+//   file: Express.Multer.File,
+//   folder: string,
+// ): Promise<UploadedAsset> => {
+//   return new Promise((resolve, reject) => {
+//     try {
+//       const resourceType = getResourceTypeByMime(file.mimetype);
+//       const isVideo = resourceType === 'video';
+
+//       const uploadOptions: any = {
+//         folder,
+//         resource_type: resourceType,
+//         use_filename: true,
+//         unique_filename: true,
+//         overwrite: false,
+//       };
+
+//       // Convert video to MP4 but KEEP ORIGINAL COLOR
+//       if (isVideo) {
+//         uploadOptions.format = 'mp4';
+
+//         // Optional eager SDR fallback
+//         uploadOptions.eager = [
+//           {
+//             format: 'mp4',
+//             video_codec: 'h264',
+//             audio_codec: 'aac',
+//             quality: 'auto',
+//           },
+//         ];
+
+//         uploadOptions.eager_async = false;
+//       }
+
+//       const stream = cloudinary.uploader.upload_stream(
+//         uploadOptions,
+//         (error, result) => {
+//           if (error) {
+//             errorLogger.error(chalk.red('Cloudinary upload error:'), error);
+//             return reject(error);
+//           }
+
+//           const originalUrl = result?.secure_url ?? '';
+
+//           let playbackUrl: string | undefined;
+//           if (isVideo && result?.eager?.length) {
+//             playbackUrl = result.eager[0].secure_url;
+//           }
+
+//           resolve({
+//             secureUrl: originalUrl,
+//             playbackUrl,
+//             publicId: result?.public_id ?? '',
+//             resourceType:
+//               (result?.resource_type as CloudinaryResourceType) ?? 'raw',
+//             format: result?.format ?? null,
+//             bytes: result?.bytes ?? null,
+//             width: (result as any)?.width ?? null,
+//             height: (result as any)?.height ?? null,
+//             duration: (result as any)?.duration ?? null,
+//           });
+//         },
+//       );
+
+//       streamifier.createReadStream(file.buffer).pipe(stream);
+//     } catch (error) {
+//       reject(error);
+//     }
+//   });
+// };
+
+// /* -------------------- MAIN MIDDLEWARE -------------------- */
+
+// const fileUploader = (fields: UploadFields) =>
+//   catchAsync(async (req, res, next) => {
+//     await new Promise<void>((resolve, reject) =>
+//       upload(fields)(req, res, err => (err ? reject(err) : resolve())),
+//     );
+
+//     const files = req.files as { [field: string]: Express.Multer.File[] };
+
+//     for (const field of Object.keys(fields)) {
+//       if (files?.[field]?.length) {
+//         const targetFolder =
+//           fileValidators[fields[field].fileType]?.folder ??
+//           getFolderByMime(files[field][0].mimetype);
+
+//         const uploaded = await Promise.all(
+//           files[field].map(file => uploadToCloudinary(file, targetFolder)),
+//         );
+
+//         const wantsArray = (fields[field]?.maxCount || 1) > 1;
+//         const returnType = fields[field]?.returnType ?? 'object';
+//         const delivery = fields[field]?.delivery ?? 'original';
+//         const isVideoField = fields[field].fileType === 'videos';
+
+//         const mapOne = (u: UploadedAsset) => {
+//           // Always preserve original if requested
+//           if (delivery === 'original' || delivery === 'hdr') {
+//             return u.secureUrl;
+//           }
+
+//           // SDR playback only if requested
+//           if (delivery === 'sdr' && isVideoField) {
+//             return u.playbackUrl || buildSDRPlaybackUrl(u.publicId);
+//           }
+
+//           return u.secureUrl;
+//         };
+
+//         let value: any;
+
+//         if (returnType === 'url') {
+//           value = wantsArray ? uploaded.map(mapOne) : mapOne(uploaded[0]);
+//         } else {
+//           value = wantsArray ? uploaded : uploaded[0];
+//         }
+
+//         req.body[field] = value;
+//       } else {
+//         req.body[field] = fields[field].default;
+//       }
+//     }
+
+//     if (req.body?.data) {
+//       Object.assign(req.body, JSON.parse(req.body.data));
+//       delete req.body.data;
+//     }
+
+//     next();
+//   });
+
+// export default fileUploader;
 
 //!
 // cloudinary.config({
