@@ -8,6 +8,10 @@ const storySchema = new Schema<IStory>(
     contentType: { type: String, enum: ['image', 'video'], required: true },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     expiryNotificationSent: { type: Boolean, default: false },
+    video_ios: { type: String, default: '' },
+    video_normal: { type: String, default: '' },
+    image_ios: { type: String, default: '' },
+    image_normal: { type: String, default: '' },
   },
   {
     timestamps: true,

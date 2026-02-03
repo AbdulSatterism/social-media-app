@@ -29,11 +29,25 @@ const socket = (io: Server) => {
         reaction?: boolean;
         media?: string; // URL from REST upload
         thumbnail?: string;
+        media_ios?: string;
+        media_normal?: string;
+        thumbnail_ios?: string;
+        thumbnail_normal?: string;
         contentType: 'text' | 'image' | 'video';
       }) => {
         try {
-          const { chat, sender, message, media, thumbnail, contentType } =
-            payload;
+          const {
+            chat,
+            sender,
+            message,
+            media,
+            thumbnail,
+            media_ios,
+            media_normal,
+            thumbnail_ios,
+            thumbnail_normal,
+            contentType,
+          } = payload;
 
           if (!chat || !sender) throw new Error('chat and sender are required');
           if (!message && !media) throw new Error('Message or media required');
@@ -48,6 +62,10 @@ const socket = (io: Server) => {
             reaction: payload.reaction || false,
             media: contentType !== 'text' ? media : undefined,
             thumbnail: thumbnail ? thumbnail : '',
+            media_ios: media_ios ? media_ios : '',
+            media_normal: media_normal ? media_normal : '',
+            thumbnail_ios: thumbnail_ios ? thumbnail_ios : '',
+            thumbnail_normal: thumbnail_normal ? thumbnail_normal : '',
             contentType,
           });
 

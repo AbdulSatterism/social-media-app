@@ -57,6 +57,7 @@ router.patch(
       size: 10 * 1024 * 1024,
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     },
   }),
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),

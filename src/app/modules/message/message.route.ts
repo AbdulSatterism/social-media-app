@@ -16,18 +16,21 @@ router.post(
       size: 50 * 1024 * 1024,
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     }, // 50MB
     thumbnail: {
       fileType: 'thumbnails',
       size: 200 * 1024 * 1024,
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     }, // 200MB
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024,
       returnType: 'url',
       delivery: 'playback',
+      platformVariants: true,
     }, // 1000MB
   }),
   (req, res) => {
@@ -51,18 +54,21 @@ router.post(
       size: 50 * 1024 * 1024,
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     }, // 50MB
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024,
       returnType: 'url',
       delivery: 'playback',
+      platformVariants: true,
     }, // 1000MB
     thumbnail: {
       fileType: 'thumbnails',
       size: 200 * 1024 * 1024,
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     }, // 200MB
   }),
   MessageController.sendMessage,

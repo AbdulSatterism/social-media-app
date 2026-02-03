@@ -1,9 +1,6 @@
 import { Router } from 'express';
-
-// import validateRequest from '../../middlewares/validateRequest';
 import auth from '../../middlewares/auth';
 import { USER_ROLES } from '../../../enums/user';
-// import { StoryValidation } from './story.validation';
 import { StoryController } from './story.controller';
 import fileUploader from '../../middlewares/fileUploader';
 import validateRequest from '../../middlewares/validateRequest';
@@ -21,12 +18,14 @@ router.post(
       size: 50 * 1024 * 1024, // 50MB
       returnType: 'url',
       delivery: 'original',
+      platformVariants: true,
     },
     video: {
       fileType: 'videos',
       size: 1000 * 1024 * 1024, // 1000MB
       returnType: 'url',
       delivery: 'playback',
+      platformVariants: true,
     },
   }),
   validateRequest(StoryValidation.createStoryValidationSchema),
