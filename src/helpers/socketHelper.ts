@@ -69,8 +69,6 @@ const socket = (io: Server) => {
             contentType,
           });
 
-          console.log('New message created:', newMessage);
-
           const populatedMessage = await Message.findById(newMessage._id)
             .populate('sender', 'name image _id')
             .populate('chat', 'type name');
