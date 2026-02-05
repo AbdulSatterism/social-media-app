@@ -42,13 +42,26 @@ const sendMessage = async (payload: any) => {
     thumbnail,
     contentType,
     reaction,
+    image_ios,
+    image_normal,
+    video_ios,
+    video_normal,
+    thumbnail_ios,
+    thumbnail_normal,
   } = payload;
   let media = '';
 
+  let media_ios = '';
+  let media_normal = '';
+
   if (contentType === 'image') {
-    media = image;
+    media = image || '';
+    media_ios = image_ios || image || '';
+    media_normal = image_normal || image || '';
   } else if (contentType === 'video') {
-    media = video;
+    media = video || '';
+    media_ios = video_ios || video || '';
+    media_normal = video_normal || video || '';
   }
 
   const isUserExist = await User.findById(senderId);
@@ -68,6 +81,10 @@ const sendMessage = async (payload: any) => {
     message,
     thumbnail,
     media,
+    media_ios,
+    media_normal,
+    thumbnail_ios: thumbnail_ios || '',
+    thumbnail_normal: thumbnail_normal || '',
     contentType,
     reaction,
   }));
