@@ -259,9 +259,15 @@ const getPlayerId = async (playerId: string, userId: string) => {
 
   const updateUser = await User.findByIdAndUpdate(
     { _id: userId },
-    { $addToSet: { playerId: playerId } },
+    { $set: { playerId: [playerId] } },
     { new: true },
   );
+
+  // const updateUser = await User.findByIdAndUpdate(
+  //   { _id: userId },
+  //   { $addToSet: { playerId: playerId } },
+  //   { new: true },
+  // );
 
   return updateUser;
 };
