@@ -14,4 +14,5 @@ export interface IMessage {
   thumbnail_normal?: string;
   contentType: 'text' | 'image' | 'video';
   read?: boolean;
+  caption?: string;
 }

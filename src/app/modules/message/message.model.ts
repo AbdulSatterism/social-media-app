@@ -15,6 +15,7 @@ const messageSchema = new Schema<IMessage>(
     thumbnail_ios: { type: String, default: '' },
     thumbnail_normal: { type: String, default: '' },
     read: { type: Boolean, default: false },
+    caption: { type: String, default: '' },
 
     contentType: {
       type: String,

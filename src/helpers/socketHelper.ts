@@ -34,6 +34,7 @@ const socket = (io: Server) => {
         thumbnail_ios?: string;
         thumbnail_normal?: string;
         contentType: 'text' | 'image' | 'video';
+        caption?: string;
       }) => {
         try {
           const {
@@ -47,6 +48,7 @@ const socket = (io: Server) => {
             thumbnail_ios,
             thumbnail_normal,
             contentType,
+            caption,
           } = payload;
 
           if (!chat || !sender) throw new Error('chat and sender are required');
@@ -67,6 +69,7 @@ const socket = (io: Server) => {
             thumbnail_ios: thumbnail_ios ? thumbnail_ios : '',
             thumbnail_normal: thumbnail_normal ? thumbnail_normal : '',
             contentType,
+            caption: caption || '',
           });
 
           console.log('New message created with ID:', newMessage);

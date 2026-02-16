@@ -48,6 +48,7 @@ const sendMessage = async (payload: any) => {
     video_normal,
     thumbnail_ios,
     thumbnail_normal,
+    caption,
   } = payload;
   let media = '';
 
@@ -87,6 +88,7 @@ const sendMessage = async (payload: any) => {
     thumbnail_normal: thumbnail_normal || '',
     contentType,
     reaction,
+    caption,
   }));
 
   const result = await Message.insertMany(newMessages);
