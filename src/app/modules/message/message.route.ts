@@ -38,6 +38,7 @@ router.post(
     const isVideo = !!req.body.video;
     const isImage = !!req.body.image;
     const isThumb = !!req.body.thumbnail;
+
     const mediaUrl =
       req.body.video || req.body.image || req.body.thumbnail || '';
     const media_ios = isVideo
@@ -64,6 +65,7 @@ router.post(
       media_normal,
       thumbnail_ios,
       thumbnail_normal,
+      caption: req.body.caption || '',
     });
   },
 );
