@@ -51,16 +51,16 @@ async function main() {
   }
 
   //handle unhandleRejection
-  process.on('unhandledRejection', error => {
-    if (server) {
-      server.close(() => {
-        errorLogger.error('UnhandleRejection Detected', error);
-        process.exit(1);
-      });
-    } else {
-      process.exit(1);
-    }
-  });
+  // process.on('unhandledRejection', error => {
+  //   if (server) {
+  //     server.close(() => {
+  //       errorLogger.error('UnhandleRejection Detected', error);
+  //       process.exit(1);
+  //     });
+  //   } else {
+  //     process.exit(1);
+  //   }
+  // });
 }
 
 main();
