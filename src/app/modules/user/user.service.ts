@@ -229,7 +229,7 @@ const deleteUserByAdmin = async (adminId: string, userId: string) => {
   return result;
 };
 
-const contactMatch = async (payload: any) => {
+const contactMatch = async (payload: any, userId: string) => {
   const allUser = await User.find(
     {},
     { _id: 1, image: 1, name: 1, phone: 1 },
@@ -246,6 +246,20 @@ const contactMatch = async (payload: any) => {
   const unmatch = payload.filter(
     (item: any) => !match.some((user: any) => user.phone === item.phone),
   );
+
+  // extract all phone number from payload
+  const phoneNumbers = payload.map((item: any) => item.phone);
+
+  // add unique phone number in match list to user matchContactList
+
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $addToSet: { contactList: { $each: phoneNumbers } },
+    },
+    { new: true },
+  );
+
   return { match, unmatch };
 };
 

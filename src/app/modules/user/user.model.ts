@@ -74,6 +74,11 @@ const userSchema = new Schema<IUser, UserModal>(
       type: [String],
       default: [],
     },
+    contactList: {
+      type: [String],
+      default: [],
+      required: false,
+    },
 
     authentication: {
       type: {

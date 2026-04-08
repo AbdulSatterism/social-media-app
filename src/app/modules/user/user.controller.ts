@@ -134,7 +134,8 @@ const deleteUserByAdmin = catchAsync(async (req, res) => {
 });
 
 const contactMatch = catchAsync(async (req, res) => {
-  const result = await UserService.contactMatch(req.body);
+  const userId = req.user.id;
+  const result = await UserService.contactMatch(req.body, userId);
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

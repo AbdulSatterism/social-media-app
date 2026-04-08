@@ -20,6 +20,7 @@ export type IUser = {
     oneTimeCode: number;
     expireAt: Date;
   };
+  contactList?: string[];
   verified: boolean;
 };
 

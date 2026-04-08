@@ -22,23 +22,51 @@ const allStories = async (userId: string, query: Record<string, unknown>) => {
   const skip = (pages - 1) * size;
   const isUserExist = await User.isExistUserById(userId);
 
-  if (!isUserExist) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'needs to be logged in!');
+  // Use isUserExist.contactList directly
+  if (!isUserExist.contactList?.length) {
+    return {
+      data: [],
+      meta: { page, limit, totalPage: 0, total: 0 },
+    };
   }
 
+  // Find all users whose phone exists in contactList
+  const contactUsers = await User.find(
+    { phone: { $in: isUserExist.contactList } },
+    { _id: 1 },
+  ).lean();
+
+  const contactUserIds = contactUsers.map(user => user._id);
+
+  const filter = { author: { $in: contactUserIds } };
+
   const [result, total] = await Promise.all([
-    Story.find()
+    Story.find(filter)
       .populate('author', { name: 1, image: 1 })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(size)
       .lean(),
-    Story.countDocuments(),
+    Story.countDocuments(filter),
   ]);
 
-  if (!result) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'Story not found!');
-  }
+  // if (!isUserExist) {
+  //   throw new AppError(StatusCodes.NOT_FOUND, 'needs to be logged in!');
+  // }
+
+  // const [result, total] = await Promise.all([
+  //   Story.find()
+  //     .populate('author', { name: 1, image: 1 })
+  //     .sort({ createdAt: -1 })
+  //     .skip(skip)
+  //     .limit(size)
+  //     .lean(),
+  //   Story.countDocuments(),
+  // ]);
+
+  // if (!result) {
+  //   throw new AppError(StatusCodes.NOT_FOUND, 'Story not found!');
+  // }
 
   const totalPage = Math.ceil(total / size);
 

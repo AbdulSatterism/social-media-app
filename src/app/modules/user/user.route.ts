@@ -89,6 +89,7 @@ router.delete(
 
 router.post(
   '/contact',
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
   // cacheGet('users:contact', 120, req => ({ q: req.query })),
   UserController.contactMatch,
 );
