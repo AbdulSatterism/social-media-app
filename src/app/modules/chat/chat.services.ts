@@ -247,14 +247,7 @@ const leaveGroupChat = async (chatId: string, memberId: string) => {
 
 // for private chat list with last message
 
-const chatListWithLastMessage = async (
-  userId: string,
-  query: Record<string, unknown>,
-) => {
-  const page = Number(query.page) || 1;
-  const limit = Number(query.limit) || 10;
-  const skip = (page - 1) * limit;
-
+const chatListWithLastMessage = async (userId: string) => {
   // ✅ Check user existence
   const isUserExist = await User.isExistUserById(userId);
   if (!isUserExist) {
@@ -272,8 +265,6 @@ const chatListWithLastMessage = async (
     {
       $sort: { updatedAt: -1 },
     },
-    { $skip: skip },
-    { $limit: limit },
 
     // ✅ Lookup last message
     {
@@ -324,20 +315,8 @@ const chatListWithLastMessage = async (
     },
   ]);
 
-  // ✅ Pagination
-  const total = await Chat.countDocuments({
-    members: userObjectId,
-  });
-  const totalPage = Math.ceil(total / limit);
-
   return {
     data: chats,
-    meta: {
-      page,
-      limit,
-      totalPage,
-      total,
-    },
   };
 };
 

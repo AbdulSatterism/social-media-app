@@ -90,18 +90,12 @@ const leaveGroupChat = catchAsync(async (req, res) => {
 
 const chatListWithLastMessage = catchAsync(async (req, res) => {
   const userId = req?.user?.id;
-  const result = await ChatService.chatListWithLastMessage(userId, req.query);
+  const result = await ChatService.chatListWithLastMessage(userId);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'Fetched chat list with last message successfully',
-    meta: {
-      page: result.meta.page,
-      limit: result.meta.limit,
-      totalPage: result.meta.totalPage,
-      total: result.meta.total,
-    },
     data: result.data,
   });
 });
