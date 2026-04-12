@@ -39,7 +39,6 @@ router.post(
 router.get(
   '/private-chat-list',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  // cacheGet('chats:private-list', 120, req => ({ q: req.query })),
   ChatController.chatListWithLastMessage,
 );
 router.get(
