@@ -10,8 +10,6 @@ const getMyAllNotifications = catchAsync(async (req, res) => {
     req.query,
   );
 
-  // await Cache.delByPattern('notifications:*');
-
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -30,8 +28,6 @@ const deleteNotification = catchAsync(async (req, res) => {
   const { id } = req.params;
   const userId = req?.user?.id;
   const result = await NotificationService.deleteNotification(id, userId);
-
-  // await Cache.delByPattern('notifications:*');
 
   sendResponse(res, {
     success: true,
@@ -73,8 +69,6 @@ const getSingleNotification = catchAsync(async (req, res) => {
 const deleteNotificationByAdmin = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await NotificationService.deleteNotificationByAdmin(id);
-
-  // await Cache.delByPattern('notifications:*');
 
   sendResponse(res, {
     success: true,
