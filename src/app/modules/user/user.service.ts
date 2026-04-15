@@ -284,14 +284,15 @@ const contactMatch = async (payload: any, userId: string) => {
     )
     .map((item: any) => item.playerId[0]);
 
+  // First remove self playerId if present
+  await User.findByIdAndUpdate(userId, {
+    $pull: { mutualFriendsPlayerId: loginUserPlayerId },
+  });
+
+  // Then add new unique playerIds (excluding self already filtered)
   await User.findByIdAndUpdate(
     userId,
-    {
-      $pull: { mutualFriendsPlayerId: loginUserPlayerId }, // remove self if present
-      $addToSet: {
-        mutualFriendsPlayerId: { $each: playerIdsToAdd }, // add unique, filtered IDs
-      },
-    },
+    { $addToSet: { mutualFriendsPlayerId: { $each: playerIdsToAdd } } },
     { new: true },
   );
 
