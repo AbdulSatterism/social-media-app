@@ -230,6 +230,12 @@ const deleteUserByAdmin = async (adminId: string, userId: string) => {
 };
 
 const contactMatch = async (payload: any, userId: string) => {
+  const loginUser = await User.findById(userId);
+
+  if (!loginUser) {
+    throw new AppError(StatusCodes.NOT_FOUND, "User doesn't exist!");
+  }
+
   const allUser = await User.find(
     {},
     { _id: 1, image: 1, name: 1, phone: 1, playerId: 1 },
@@ -264,20 +270,44 @@ const contactMatch = async (payload: any, userId: string) => {
   );
 
   // add all unique match user playerIds into user mutualFriendsPlayerId list
+  // also remove mutualFriendsPlayerId which are in loginUser playerId
+
+  const loginUserPlayerId = loginUser?.playerId;
+
+  // Filter out any match playerId that equals the logged-in user's own playerId
+  const playerIdsToAdd = match
+    .filter(
+      (item: any) =>
+        item.playerId &&
+        item.playerId.length > 0 &&
+        item.playerId[0] !== loginUserPlayerId,
+    )
+    .map((item: any) => item.playerId[0]);
 
   await User.findByIdAndUpdate(
     userId,
     {
+      $pull: { mutualFriendsPlayerId: loginUserPlayerId }, // remove self if present
       $addToSet: {
-        mutualFriendsPlayerId: {
-          $each: match
-            .filter((item: any) => item.playerId && item.playerId.length > 0)
-            .map((item: any) => item.playerId[0]),
-        },
+        mutualFriendsPlayerId: { $each: playerIdsToAdd }, // add unique, filtered IDs
       },
     },
     { new: true },
   );
+
+  // await User.findByIdAndUpdate(
+  //   userId,
+  //   {
+  //     $addToSet: {
+  //       mutualFriendsPlayerId: {
+  //         $each: match
+  //           .filter((item: any) => item.playerId && item.playerId.length > 0)
+  //           .map((item: any) => item.playerId[0]),
+  //       },
+  //     },
+  //   },
+  //   { new: true },
+  // );
 
   return { match, unmatch };
 };
