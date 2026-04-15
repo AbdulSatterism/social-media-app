@@ -272,7 +272,7 @@ const contactMatch = async (payload: any, userId: string) => {
   // add all unique match user playerIds into user mutualFriendsPlayerId list
   // also remove mutualFriendsPlayerId which are in loginUser playerId
 
-  const loginUserPlayerId = loginUser?.playerId;
+  const loginUserPlayerId = loginUser?.playerId?.[0] || null;
 
   // Filter out any match playerId that equals the logged-in user's own playerId
   const playerIdsToAdd = match
