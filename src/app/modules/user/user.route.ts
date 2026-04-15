@@ -19,14 +19,12 @@ router.post(
 router.get(
   '/all-user',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:all', 120, req => ({ q: req.query })),
   UserController.getAllUser,
 );
 
 router.get(
   '/',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:no-pagination', 120, req => ({ q: req.query })),
   UserController.usersWithoutPagination,
 );
 
@@ -49,14 +47,12 @@ router.patch(
 router.get(
   '/user',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:user', 120, req => ({ q: req.query })),
   UserController.getUserProfile,
 );
 
 router.get(
   '/get-single-user/:id',
   auth(USER_ROLES.ADMIN),
-  // cacheGet('users:single', 120, req => ({ params: req.params })),
   UserController.getSingleUser,
 );
 
@@ -64,14 +60,12 @@ router.get(
 router.get(
   '/user-search',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:search', 120, req => ({ q: req.query })),
   UserController.searchUser,
 );
 
 router.get(
   '/profile',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:profile', 120, req => ({ q: req.query })),
   UserController.getUserProfile,
 );
 
@@ -90,7 +84,6 @@ router.delete(
 router.post(
   '/contact',
   auth(USER_ROLES.ADMIN, USER_ROLES.USER),
-  // cacheGet('users:contact', 120, req => ({ q: req.query })),
   UserController.contactMatch,
 );
 

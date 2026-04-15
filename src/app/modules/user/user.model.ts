@@ -79,6 +79,11 @@ const userSchema = new Schema<IUser, UserModal>(
       default: [],
       required: false,
     },
+    mutualFriendsPlayerId: {
+      type: [String],
+      default: [],
+      required: false,
+    },
 
     authentication: {
       type: {

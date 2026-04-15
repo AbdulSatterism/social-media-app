@@ -35,7 +35,6 @@ router.post(
 router.get(
   '/all-stories',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  // cacheGet('stories:all', 120, req => ({ q: req.query })),
   StoryController.allStories,
 );
 

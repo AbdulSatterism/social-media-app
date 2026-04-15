@@ -21,6 +21,7 @@ export type IUser = {
     expireAt: Date;
   };
   contactList?: string[];
+  mutualFriendsPlayerId: string[];
   verified: boolean;
 };
 

@@ -232,8 +232,9 @@ const deleteUserByAdmin = async (adminId: string, userId: string) => {
 const contactMatch = async (payload: any, userId: string) => {
   const allUser = await User.find(
     {},
-    { _id: 1, image: 1, name: 1, phone: 1 },
+    { _id: 1, image: 1, name: 1, phone: 1, playerId: 1 },
   ).lean();
+
   const match = payload
     .map((item: any) => allUser.find(user => user.phone === item.phone))
     .filter((user: any) => user !== undefined)
@@ -242,7 +243,9 @@ const contactMatch = async (payload: any, userId: string) => {
       image: user.image,
       name: user.name,
       phone: user.phone,
+      playerId: user.playerId,
     }));
+
   const unmatch = payload.filter(
     (item: any) => !match.some((user: any) => user.phone === item.phone),
   );
@@ -256,6 +259,22 @@ const contactMatch = async (payload: any, userId: string) => {
     userId,
     {
       $addToSet: { contactList: { $each: phoneNumbers } },
+    },
+    { new: true },
+  );
+
+  // add all unique match user playerIds into user mutualFriendsPlayerId list
+
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $addToSet: {
+        mutualFriendsPlayerId: {
+          $each: match
+            .filter((item: any) => item.playerId && item.playerId.length > 0)
+            .map((item: any) => item.playerId[0]),
+        },
+      },
     },
     { new: true },
   );
@@ -276,12 +295,6 @@ const getPlayerId = async (playerId: string, userId: string) => {
     { $set: { playerId: [playerId] } },
     { new: true },
   );
-
-  // const updateUser = await User.findByIdAndUpdate(
-  //   { _id: userId },
-  //   { $addToSet: { playerId: playerId } },
-  //   { new: true },
-  // );
 
   return updateUser;
 };

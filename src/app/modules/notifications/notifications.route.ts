@@ -8,7 +8,6 @@ const router = express.Router();
 router.get(
   '/my-notifications',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN),
-  // cacheGet('notifications:all', 120, req => ({ q: req.query })),
   NotificationController.getMyAllNotifications,
 );
 
@@ -23,16 +22,12 @@ router.delete(
 router.get(
   '/admin-notifications',
   auth(USER_ROLES.ADMIN),
-  // cacheGet('notifications:admin', 120, req => ({ q: req.query })),
   NotificationController.getAdminNotificaiton,
 );
 
 router.patch(
   '/admin-notification/:id',
   auth(USER_ROLES.ADMIN),
-  // cacheGet('notifications:admin-notification', 120, req => ({
-  //   params: req.params,
-  // })),
   NotificationController.getSingleNotification,
 );
 
