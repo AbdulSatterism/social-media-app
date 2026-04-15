@@ -27,7 +27,7 @@ export const sendPushNotification = async (
 
     await client.createNotification(notification);
 
-    logger.info(colors.green(`✅notification send to ${to} phone number`));
+    logger.info(colors.green(`✅notification send to ${to} successfully`));
   } catch (error: any) {
     logger.error(
       '❌ Failed to send push notification:',

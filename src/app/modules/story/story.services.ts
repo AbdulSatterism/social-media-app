@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
 import { IStory } from './story.interface';
 import { Story } from './story.model';
+import { sendPushNotification } from '../../../util/onesignal';
 
 const createStory = async (payload: IStory) => {
   const isUserExist = await User.isExistUserById(payload?.author.toString());
@@ -12,6 +13,17 @@ const createStory = async (payload: IStory) => {
   }
 
   const result = await Story.create(payload);
+
+  // send push notification all mutualFriendsPlayerId hast array of string all player id of mutual friends
+
+  const notificationText = `${isUserExist.name} added to their Story. Check it out & share a re:`;
+
+  await sendPushNotification(
+    isUserExist.mutualFriendsPlayerId,
+    'all',
+    notificationText,
+  );
+
   return result;
 };
 
@@ -49,24 +61,6 @@ const allStories = async (userId: string, query: Record<string, unknown>) => {
       .lean(),
     Story.countDocuments(filter),
   ]);
-
-  // if (!isUserExist) {
-  //   throw new AppError(StatusCodes.NOT_FOUND, 'needs to be logged in!');
-  // }
-
-  // const [result, total] = await Promise.all([
-  //   Story.find()
-  //     .populate('author', { name: 1, image: 1 })
-  //     .sort({ createdAt: -1 })
-  //     .skip(skip)
-  //     .limit(size)
-  //     .lean(),
-  //   Story.countDocuments(),
-  // ]);
-
-  // if (!result) {
-  //   throw new AppError(StatusCodes.NOT_FOUND, 'Story not found!');
-  // }
 
   const totalPage = Math.ceil(total / size);
 
