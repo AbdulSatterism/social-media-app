@@ -24,7 +24,7 @@ const createUserFromDb = async (payload: IUser) => {
   const existingUser = await User.findOne({ phone: payload.phone });
 
   if (existingUser) {
-    if (!existingUser.verified || !existingUser.image || !existingUser.name) {
+    if (!existingUser.verified || !existingUser.name) {
       await User.deleteOne({ phone: payload.phone });
     }
   }
