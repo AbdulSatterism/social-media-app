@@ -113,6 +113,25 @@ export const messageDeleteJob = (): void => {
   });
 };
 
+export const userDeleteJob = (): void => {
+  // daily one time this job will run to delete users with null name (if any)
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      const result = await User.deleteMany({ name: null });
+
+      if (result.deletedCount) {
+        logger.info(
+          colors.green(
+            `total Deleted ${result.deletedCount}  users with null name has been deleted `,
+          ),
+        );
+      }
+    } catch (err) {
+      logger.error('user Error deleting users with null name:', err);
+    }
+  });
+};
+
 export const initializeScheduledJobs = (): void => {
   // Schedule notification job (frequent - send notifications as soon as 23 hours passed)
   cron.schedule(NOTIFICATION_CRON, sendExpiryNotifications);

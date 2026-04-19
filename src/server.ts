@@ -9,7 +9,7 @@ import config from './config';
 import { socketHelper } from './helpers/socketHelper';
 import { errorLogger, logger } from './shared/logger';
 import seedAdmin from './DB';
-import { initializeScheduledJobs } from './util/storyDelete';
+import { initializeScheduledJobs, userDeleteJob } from './util/storyDelete';
 
 //uncaught exception
 process.on('uncaughtException', error => {
@@ -35,6 +35,7 @@ async function main() {
     await seedAdmin();
 
     initializeScheduledJobs();
+    userDeleteJob();
 
     //socket
     const io = new Server(server, {
