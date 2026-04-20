@@ -5,6 +5,8 @@ const createUserSchema = z.object({
     phone: z.string().optional(),
     password: z.string(),
     dob: z.date().optional(),
+    username: z.string().optional(),
+    name: z.string().optional(),
   }),
 });
 
@@ -16,6 +18,7 @@ const updateUserProfileSchema = z.object({
     dob: z.date().optional(),
     image: z.string().optional(),
     gender: z.enum(['MALE', 'FEMALE', 'OTHERS']).optional(),
+    username: z.string().optional(),
   }),
 });
 

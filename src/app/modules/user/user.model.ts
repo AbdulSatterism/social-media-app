@@ -12,6 +12,10 @@ const userSchema = new Schema<IUser, UserModal>(
       type: String,
       default: null,
     },
+    username: {
+      type: String,
+      default: '',
+    },
     email: {
       type: String,
       required: false,
